@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">anemia-buddy</string>
+    <string name="title_activity_main">anemia-buddy</string>
+    <string name="package_name">com.anemiabuddy.app</string>
+    <string name="custom_url_scheme">com.anemiabuddy.app</string>
+</resources>
