@@ -11,6 +11,7 @@ import cardE from '../../assets/7/7. misi harian - E.png'
 // IMPORT ASSET PROFIL PRIA & WANITA (CROPPED TANPA PADDING TRANSPARAN)
 import bgProfilPria from '../../assets/6/game home - profil pria_crop.png'
 import bgProfilWanita from '../../assets/6/game home - profil wanita_crop.png'
+import { playSound } from '../../utils/audio'
 
 function MisiHarian({ level = 1, onBack, onSelectMisi }) {
   const [gender, setGender] = useState('male')
@@ -126,17 +127,20 @@ function MisiHarian({ level = 1, onBack, onSelectMisi }) {
 
     // Aturan 1: Jika sudah selesai -> hanya 1x percobaan
     if (status === 'completed') {
+      playSound('click')
       showToast(`Misi ${misiKey} sudah diselesaikan (${score} PTS)! Setiap misi hanya dapat diakses 1x percobaan.`)
       return
     }
 
     // Aturan 2: Jika misi sebelumnya belum selesai -> terkunci
     if (status === 'locked') {
+      playSound('wrong')
       showToast(`Misi ${misiKey} masih terkunci! Selesaikan Misi ${prevKey} terlebih dahulu.`)
       return
     }
 
     // Misi terbuka -> mulai misi
+    playSound('click')
     const selectedTask = currentLevelConfig[misiKey]
     onSelectMisi && onSelectMisi({
       level: level,

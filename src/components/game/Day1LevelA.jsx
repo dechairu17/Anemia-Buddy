@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabase'
 import bgDay1A from '../../assets/8. day 1 level A/8 BACKGROUND .png'
 import cardBackImg from '../../assets/8. day 1 level A/46.png'
 import mascotImg from '../../assets/9. day 1 level B/karakter.png'
+import { playSound } from '../../utils/audio'
 
 // KOMPONEN LONCENG 3D NOTIFIKASI
 function NotificationBell() {
@@ -191,6 +192,7 @@ function Day1LevelA({ onBack, onComplete }) {
 
   // FUNGSI MEMULAI GAME DENGAN SUSUNAN KARTU BARU (ACAK)
   const startNewGame = () => {
+    playSound('click')
     startTimeRef.current = Date.now()
     setCards(getShuffledCards())
     setFlippedIndices([])
@@ -229,7 +231,8 @@ function Day1LevelA({ onBack, onComplete }) {
     const clickedCard = cards[index]
     if (matchedPairs.includes(clickedCard.pairId)) return // Kartu sudah cocok
 
-    // Buka kartu
+    // Buka kartu dengan efek suara klik/flip
+    playSound('click')
     const newFlipped = [...flippedIndices, index]
     setFlippedIndices(newFlipped)
 
@@ -241,6 +244,7 @@ function Day1LevelA({ onBack, onComplete }) {
 
       if (firstCard.pairId === secondCard.pairId && firstCard.id !== secondCard.id) {
         // PASANGAN COCOK!
+        playSound('match')
         setTimeout(() => {
           const updatedMatched = [...matchedPairs, firstCard.pairId]
           setMatchedPairs(updatedMatched)
@@ -252,6 +256,7 @@ function Day1LevelA({ onBack, onComplete }) {
           // JIKA SEMUA 3 PASANGAN (6 KARTU) SELESAI
           if (updatedMatched.length === 3) {
             setTimeout(() => {
+              playSound('cring')
               saveScoreToSupabase(earnedScore)
               setGameState('completed')
             }, 600)
@@ -259,6 +264,7 @@ function Day1LevelA({ onBack, onComplete }) {
         }, 700)
       } else {
         // PASANGAN TIDAK COCOK:
+        playSound('wrong')
         // Hitung penalti jika salah pencocokan > 3 kali
         const nextWrong = wrongAttempts + 1
         setWrongAttempts(nextWrong)

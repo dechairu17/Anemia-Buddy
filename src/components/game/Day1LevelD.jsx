@@ -7,69 +7,7 @@ import bgProfilPria from '../../assets/6/game home - profil pria_crop.png'
 import bgProfilWanita from '../../assets/6/game home - profil wanita_crop.png'
 
 // AUDIO SYNTHESIZER UNTUK SOUND EFFECT REAL-TIME
-const playSound = (type) => {
-  try {
-    const AudioContext = window.AudioContext || window.webkitAudioContext
-    if (!AudioContext) return
-    const ctx = new AudioContext()
-    const now = ctx.currentTime
-
-    if (type === 'click') {
-      const osc = ctx.createOscillator()
-      const gain = ctx.createGain()
-      osc.type = 'sine'
-      osc.frequency.setValueAtTime(450, now)
-      osc.frequency.exponentialRampToValueAtTime(700, now + 0.08)
-      gain.gain.setValueAtTime(0.2, now)
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08)
-      osc.connect(gain)
-      gain.connect(ctx.destination)
-      osc.start(now)
-      osc.stop(now + 0.08)
-    } else if (type === 'positive') {
-      const notes = [523.25, 659.25, 783.99, 1046.50]
-      notes.forEach((freq, idx) => {
-        const osc = ctx.createOscillator()
-        const gain = ctx.createGain()
-        osc.type = 'triangle'
-        osc.frequency.setValueAtTime(freq, now + idx * 0.06)
-        gain.gain.setValueAtTime(0.25, now + idx * 0.06)
-        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.06 + 0.15)
-        osc.connect(gain)
-        gain.connect(ctx.destination)
-        osc.start(now + idx * 0.06)
-        osc.stop(now + idx * 0.06 + 0.15)
-      })
-    } else if (type === 'neutral') {
-      const osc = ctx.createOscillator()
-      const gain = ctx.createGain()
-      osc.type = 'sine'
-      osc.frequency.setValueAtTime(440, now)
-      gain.gain.setValueAtTime(0.2, now)
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15)
-      osc.connect(gain)
-      gain.connect(ctx.destination)
-      osc.start(now)
-      osc.stop(now + 0.15)
-    } else if (type === 'win') {
-      const fanfare = [523.25, 659.25, 783.99, 1046.50, 1318.51]
-      fanfare.forEach((freq, idx) => {
-        const osc = ctx.createOscillator()
-        const gain = ctx.createGain()
-        osc.type = 'triangle'
-        osc.frequency.setValueAtTime(freq, now + idx * 0.09)
-        gain.gain.setValueAtTime(0.3, now + idx * 0.09)
-        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.09 + 0.3)
-        osc.connect(gain)
-        gain.connect(ctx.destination)
-        osc.start(now + idx * 0.09)
-        osc.stop(now + idx * 0.09 + 0.3)
-      })
-    }
-  } catch {
-    // Autoplay browser policy safe fallback
-  }
-}
+import { playSound } from '../../utils/audio'
 
 // -----------------------------------------------------------------------------
 // DATA SKENARIO PENELITIAN: SIKAP MENGHARGAI (PENYEBAB) & BERTANGGUNG JAWAB (GEJALA)
@@ -255,6 +193,10 @@ export default function Day1LevelD({ onBack, onComplete, misiId = 'misi_h1_d' })
   // MODAL FEEDBACK SKENARIO
   const [activeFeedback, setActiveFeedback] = useState(null)
 
+  // ADRENALIN & JUICINESS STATE
+  const [isShaking, setIsShaking] = useState(false)
+  const [lastOptionType, setLastOptionType] = useState('normal') // 'best' | 'medium' | 'low' | 'normal'
+
   // STATE PROTEKSI PENELITIAN (1X MAIN)
   const [alreadyCompleted, setAlreadyCompleted] = useState(false)
   const [existingScore, setExistingScore] = useState(0)
@@ -319,11 +261,20 @@ export default function Day1LevelD({ onBack, onComplete, misiId = 'misi_h1_d' })
     }
   }
 
-  // PILIH RESPON DALAM SKENARIO
+  // PILIH RESPON DALAM SKENARIO (DENGAN EFEK EKG & JUICINESS)
   const handleSelectOption = (option) => {
     playSound('click')
-    if (option.type === 'best') playSound('positive')
-    else playSound('neutral')
+    setLastOptionType(option.type)
+    if (option.type === 'best') {
+      playSound('correct')
+      playSound('stamp')
+    } else if (option.type === 'low') {
+      playSound('wrong')
+      setIsShaking(true)
+      setTimeout(() => setIsShaking(false), 400)
+    } else {
+      playSound('click')
+    }
 
     setScoreMenghargai(prev => prev + option.scoreMenghargai)
     setScoreTanggungJawab(prev => prev + option.scoreTanggungJawab)
@@ -338,9 +289,10 @@ export default function Day1LevelD({ onBack, onComplete, misiId = 'misi_h1_d' })
   const handleNextScenario = () => {
     setActiveFeedback(null)
     if (currentScenarioIndex + 1 < SCENARIOS.length) {
+      playSound('click')
       setCurrentScenarioIndex(prev => prev + 1)
     } else {
-      playSound('win')
+      playSound('cring')
       const finalSum = Math.min(100, Math.max(20, scoreMenghargai + scoreTanggungJawab))
       saveScoreToDatabase(finalSum)
       setStage('completed')
@@ -478,14 +430,25 @@ export default function Day1LevelD({ onBack, onComplete, misiId = 'misi_h1_d' })
             STAGE 1: BERMAIN GAME AKSI DOKTER (SKENARIO 1 S/D 4)
            ----------------------------------------------------------------------- */}
         {stage === 'playing' && currentScenario && (
-          <div className="w-full max-w-xl bg-white/95 backdrop-blur-md rounded-2xl sm:rounded-3xl p-2.5 sm:p-3 shadow-2xl border-3 border-teal-500 flex flex-col items-center animate-fadeIn max-h-[94dvh] overflow-y-auto custom-scrollbar my-auto">
-            {/* STATUS BAR VITALITAS PASIEN HEMO */}
+          <div className={`w-full max-w-xl bg-white/95 backdrop-blur-md rounded-2xl sm:rounded-3xl p-2.5 sm:p-3 shadow-2xl border-3 border-teal-500 flex flex-col items-center animate-fadeIn max-h-[94dvh] overflow-y-auto custom-scrollbar my-auto ${isShaking ? 'animate-shake' : ''}`}>
+            {/* STATUS BAR VITALITAS PASIEN HEMO DENGAN ANIMASI EKG DETAK JANTUNG */}
             <div className="w-full flex items-center justify-between bg-slate-900 text-white rounded-lg px-2.5 py-1 shadow-xs flex-shrink-0 text-[10px]">
               <div className="flex items-center gap-1.5">
                 <span className="text-sm">🩸</span>
                 <span className="font-black text-teal-300">
-                  Pasien Hemo: <span className={hemoState.color}>{hemoState.text}</span>
+                  Hemo: <span className={hemoState.color}>{hemoState.text}</span>
                 </span>
+                {/* ANIMATED ECG PULSE LINE */}
+                <svg className="w-12 sm:w-16 h-3" viewBox="0 0 80 20" fill="none">
+                  <path
+                    d="M 0 10 L 20 10 L 26 2 L 32 18 L 38 5 L 44 15 L 50 10 L 80 10"
+                    stroke={lastOptionType === 'low' ? '#EF4444' : '#10B981'}
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="animate-pulse"
+                  />
+                </svg>
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="text-[9px] text-slate-300">Vitalitas:</span>
@@ -600,6 +563,17 @@ export default function Day1LevelD({ onBack, onComplete, misiId = 'misi_h1_d' })
               <div className={`mt-0.5 px-2.5 py-0.5 rounded-full text-[9px] sm:text-[9.5px] font-extrabold ${hemoState.badge} ${hemoState.color}`}>
                 Status Pasien Hemo: {hemoState.text} {hemoState.icon}
               </div>
+              {/* GELAR PENGHARGAAN MEDIS PENELITIAN */}
+              <div className="mt-1 px-3 py-1 rounded-xl bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-amber-950 font-black text-[10px] sm:text-[11px] shadow-sm border border-amber-300 flex items-center gap-1.5 animate-bounce">
+                <span>🎖️</span>
+                <span>GELAR: {
+                  totalEarnedScore >= 85
+                    ? 'DUTA TELADAN BEREMPATI TINGGI'
+                    : totalEarnedScore >= 65
+                    ? 'KONSELOR SAHABAT PEDULI'
+                    : 'SAHABAT BELAJAR ANEMIA'
+                }</span>
+              </div>
             </div>
 
             {/* BREAKDOWN DUA INDIKATOR SIKAP PENELITIAN */}
@@ -674,14 +648,26 @@ export default function Day1LevelD({ onBack, onComplete, misiId = 'misi_h1_d' })
       {activeFeedback && (
         <div className="fixed inset-0 z-[100] bg-black/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
           <div className="w-full max-w-sm sm:max-w-md bg-white rounded-2xl p-3 sm:p-4 shadow-2xl border-3 border-teal-400 flex flex-col items-center text-center animate-bounceIn max-h-[92vh] overflow-y-auto custom-scrollbar my-auto">
-            {/* BADGE INDIKATOR */}
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-xl">
-                {activeFeedback.option.type === 'best' ? '🌟' : activeFeedback.option.type === 'medium' ? '💡' : '⚠️'}
-              </span>
-              <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-teal-800 px-2.5 py-0.5 rounded-full bg-teal-50 border border-teal-200">
-                {activeFeedback.scenario.indicatorTitle}
-              </span>
+            {/* BADGE INDIKATOR & STEMPEL */}
+            <div className="flex flex-col items-center gap-1 mb-1">
+              {activeFeedback.option.type === 'best' && (
+                <div className="animate-stamp bg-emerald-600 text-white font-black text-[10px] sm:text-xs px-2.5 py-0.5 rounded-lg border border-emerald-300 shadow">
+                  ✓ SIKAP TELADAN EMPATIK!
+                </div>
+              )}
+              {activeFeedback.option.type === 'low' && (
+                <div className="animate-stamp bg-rose-600 text-white font-black text-[10px] sm:text-xs px-2.5 py-0.5 rounded-lg border border-rose-300 shadow">
+                  ⚠️ BUTUH DUKUNGAN LEBIH
+                </div>
+              )}
+              <div className="flex items-center gap-1.5">
+                <span className="text-xl">
+                  {activeFeedback.option.type === 'best' ? '🌟' : activeFeedback.option.type === 'medium' ? '💡' : '⚠️'}
+                </span>
+                <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-teal-800 px-2.5 py-0.5 rounded-full bg-teal-50 border border-teal-200">
+                  {activeFeedback.scenario.indicatorTitle}
+                </span>
+              </div>
             </div>
 
             {/* JUDUL FEEDBACK */}
@@ -723,7 +709,7 @@ export default function Day1LevelD({ onBack, onComplete, misiId = 'misi_h1_d' })
               ✔
             </div>
             <h2 className="text-[#003049] font-black text-base sm:text-lg mb-1">
-              {misiId === 'misi_h1_e' ? 'MISI LEVEL E TELAH SELESAI' : 'MISI LEVEL D TELAH SELESAI'}
+              MISI LEVEL D TELAH SELESAI
             </h2>
             <p className="text-slate-600 text-xs mb-2 leading-relaxed">
               Kamu sudah menyelesaikan Game 4 (Evaluasi Sikap Mengenai Anemia) sebelumnya dengan perolehan:
@@ -745,6 +731,6 @@ export default function Day1LevelD({ onBack, onComplete, misiId = 'misi_h1_d' })
           </div>
         </div>
       )}
-    </div>
+    </div>  
   )
 }

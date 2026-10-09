@@ -10,82 +10,7 @@ import imgSumberMakanan from '../../assets/3/3. materi - sumber makanan.png'
 import imgPenyebab from '../../assets/3/3. materi - penyebab.png'
 
 // AUDIO SYNTHESIZER UNTUK SOUND EFFECT REAL-TIME
-const playSound = (type) => {
-  try {
-    const AudioContext = window.AudioContext || window.webkitAudioContext
-    if (!AudioContext) return
-    const ctx = new AudioContext()
-    const now = ctx.currentTime
-
-    if (type === 'click') {
-      const osc = ctx.createOscillator()
-      const gain = ctx.createGain()
-      osc.type = 'sine'
-      osc.frequency.setValueAtTime(450, now)
-      osc.frequency.exponentialRampToValueAtTime(700, now + 0.08)
-      gain.gain.setValueAtTime(0.2, now)
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08)
-      osc.connect(gain)
-      gain.connect(ctx.destination)
-      osc.start(now)
-      osc.stop(now + 0.08)
-    } else if (type === 'correct') {
-      const notes = [523.25, 659.25, 783.99, 1046.50]
-      notes.forEach((freq, idx) => {
-        const osc = ctx.createOscillator()
-        const gain = ctx.createGain()
-        osc.type = 'triangle'
-        osc.frequency.setValueAtTime(freq, now + idx * 0.06)
-        gain.gain.setValueAtTime(0.25, now + idx * 0.06)
-        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.06 + 0.15)
-        osc.connect(gain)
-        gain.connect(ctx.destination)
-        osc.start(now + idx * 0.06)
-        osc.stop(now + idx * 0.06 + 0.15)
-      })
-    } else if (type === 'wrong') {
-      const osc = ctx.createOscillator()
-      const gain = ctx.createGain()
-      osc.type = 'sawtooth'
-      osc.frequency.setValueAtTime(220, now)
-      osc.frequency.setValueAtTime(160, now + 0.12)
-      gain.gain.setValueAtTime(0.25, now)
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25)
-      osc.connect(gain)
-      gain.connect(ctx.destination)
-      osc.start(now)
-      osc.stop(now + 0.25)
-    } else if (type === 'place') {
-      const osc = ctx.createOscillator()
-      const gain = ctx.createGain()
-      osc.type = 'sine'
-      osc.frequency.setValueAtTime(600, now)
-      osc.frequency.exponentialRampToValueAtTime(880, now + 0.09)
-      gain.gain.setValueAtTime(0.2, now)
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09)
-      osc.connect(gain)
-      gain.connect(ctx.destination)
-      osc.start(now)
-      osc.stop(now + 0.09)
-    } else if (type === 'win') {
-      const fanfare = [523.25, 659.25, 783.99, 1046.50, 1318.51]
-      fanfare.forEach((freq, idx) => {
-        const osc = ctx.createOscillator()
-        const gain = ctx.createGain()
-        osc.type = 'triangle'
-        osc.frequency.setValueAtTime(freq, now + idx * 0.09)
-        gain.gain.setValueAtTime(0.3, now + idx * 0.09)
-        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.09 + 0.3)
-        osc.connect(gain)
-        gain.connect(ctx.destination)
-        osc.start(now + idx * 0.09)
-        osc.stop(now + idx * 0.09 + 0.3)
-      })
-    }
-  } catch {
-    // Autoplay browser policy safe fallback
-  }
-}
+import { playSound } from '../../utils/audio'
 
 // DATA KARTU LEVEL 1: EVALUASI FAKTA VS MITOS TANDA GEJALA
 const CARDS_LEVEL_1 = [
@@ -201,6 +126,12 @@ export default function Day1LevelC({ onBack, onComplete, misiId = 'misi_h1_c' })
   const [dragOverZone, setDragOverZone] = useState(null) // 'fakta' | 'mitos' | null
   const [level1Mistakes, setLevel1Mistakes] = useState(0)
 
+  // ADRENALIN & GAME-FEEL (COMBO, SHAKE, TIMER, STAMP)
+  const [streakCount, setStreakCount] = useState(0)
+  const [isShaking, setIsShaking] = useState(false)
+  const [activeStamp, setActiveStamp] = useState(null) // { text: string, type: 'fakta' | 'mitos' }
+  const [timeLeft, setTimeLeft] = useState(15)
+
   // STATE LEVEL 2 (MEMBANGUN ALUR ANEMIA)
   const [availablePieces, setAvailablePieces] = useState([])
   const [slots, setSlots] = useState([null, null, null, null])
@@ -218,6 +149,48 @@ export default function Day1LevelC({ onBack, onComplete, misiId = 'misi_h1_c' })
     initLevel1Deck()
     initLevel2Pieces()
   }, [])
+
+  // HITUNG MUNDUR URGENSI WAKTU LEVEL 1 (15 DETIK DENGAN EFEK DETAK JAM TUT-TUT & TIMEOUT NYATA)
+  useEffect(() => {
+    if (phase !== 'level1' || feedbackModal || currentCardIndex >= deck.length) return
+
+    // Suara detak jam langsung berbunyi dari awal saat kartu terbuka
+    playSound('tick', { isEven: true })
+
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          // WAKTU HABIS (0 DETIK)!
+          const card = deck[currentCardIndex]
+          playSound('wrong')
+          setIsShaking(true)
+          setTimeout(() => setIsShaking(false), 400)
+          setStreakCount(0)
+          setLevel1Mistakes(m => m + 1)
+          setEarnedScore(s => Math.max(50, s - 5))
+          setFeedbackModal({
+            isCorrect: false,
+            card,
+            chosenType: 'timeout',
+            explanation: `⚠️ WAKTU 15 DETIK HABIS! Pernyataan ini sebenarnya adalah ${card?.type?.toUpperCase()}. ${card?.explanation}`
+          })
+          return 15
+        }
+
+        const isEven = prev % 2 === 0
+        // Efek suara detak jam "tik tik tik" jelas setiap detik
+        if (prev <= 5) {
+          playSound('tick', { isEven })
+          playSound('heartbeat')
+        } else {
+          playSound('tick', { isEven })
+        }
+
+        return prev - 1
+      })
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [phase, feedbackModal, currentCardIndex, deck])
 
   const loadUserData = async () => {
     try {
@@ -251,13 +224,15 @@ export default function Day1LevelC({ onBack, onComplete, misiId = 'misi_h1_c' })
     }
   }
 
-  // INISIALISASI KARTU LEVEL 1 (ACAK)
+  // INISIALISASI KARTU LEVEL 1 (ACAK DENGAN TIMER 15 DETIK)
   const initLevel1Deck = () => {
     const shuffled = [...CARDS_LEVEL_1].sort(() => Math.random() - 0.5)
     setDeck(shuffled)
     setCurrentCardIndex(0)
     setFaktaCount(0)
     setMitosCount(0)
+    setStreakCount(0)
+    setTimeLeft(15)
   }
 
   // INISIALISASI PUZZLE LEVEL 2 (ACAK)
@@ -291,29 +266,50 @@ export default function Day1LevelC({ onBack, onComplete, misiId = 'misi_h1_c' })
   }
 
   // --------------------------------------------------------------------------
-  // LOGIKA LEVEL 1: EVALUASI FAKTA VS MITOS
+  // LOGIKA LEVEL 1: EVALUASI FAKTA VS MITOS (DENGAN COMBO STREAK & STEMPEL)
   // --------------------------------------------------------------------------
   const handleSortCard = (chosenType) => {
-    if (currentCardIndex >= deck.length) return
+    if (currentCardIndex >= deck.length || activeStamp) return
     const card = deck[currentCardIndex]
     const isCorrect = card.type === chosenType
 
     if (isCorrect) {
-      playSound('correct')
+      const nextStreak = streakCount + 1
+      setStreakCount(nextStreak)
+
+      if (nextStreak >= 2) {
+        playSound('combo', { streak: nextStreak })
+      } else {
+        playSound('correct')
+      }
+
+      // Tampilkan Efek Stempel Visual
+      setActiveStamp({
+        text: chosenType === 'fakta' ? 'FAKTA MEDIS!' : 'MITOS TERBONGKAR!',
+        type: chosenType
+      })
+      playSound('stamp')
+
       if (chosenType === 'fakta') setFaktaCount(prev => prev + 1)
       else setMitosCount(prev => prev + 1)
 
-      // Cek apakah ini kartu terakhir
-      if (currentCardIndex + 1 >= deck.length) {
-        setTimeout(() => {
-          playSound('win')
+      setTimeLeft(15)
+
+      setTimeout(() => {
+        setActiveStamp(null)
+        // Cek apakah ini kartu terakhir
+        if (currentCardIndex + 1 >= deck.length) {
+          playSound('cring')
           setPhase('level1_complete')
-        }, 350)
-      } else {
-        setCurrentCardIndex(prev => prev + 1)
-      }
+        } else {
+          setCurrentCardIndex(prev => prev + 1)
+        }
+      }, 450)
     } else {
       playSound('wrong')
+      setStreakCount(0)
+      setIsShaking(true)
+      setTimeout(() => setIsShaking(false), 400)
       setLevel1Mistakes(prev => prev + 1)
       setEarnedScore(prev => Math.max(50, prev - 5))
       setFeedbackModal({
@@ -326,7 +322,17 @@ export default function Day1LevelC({ onBack, onComplete, misiId = 'misi_h1_c' })
   }
 
   const dismissFeedbackModal = () => {
+    const isTimeout = feedbackModal?.chosenType === 'timeout'
     setFeedbackModal(null)
+    setTimeLeft(15)
+    if (isTimeout) {
+      if (currentCardIndex + 1 >= deck.length) {
+        playSound('cring')
+        setPhase('level1_complete')
+      } else {
+        setCurrentCardIndex(prev => prev + 1)
+      }
+    }
   }
 
   // DRAG & DROP HANDLERS (DESKTOP & TOUCH FRIENDLY)
@@ -422,14 +428,22 @@ export default function Day1LevelC({ onBack, onComplete, misiId = 'misi_h1_c' })
       slots[3]?.order === 4
 
     if (isOrderCorrect) {
-      playSound('win')
+      playSound('cring')
       setLevel2Validation('correct')
+      setActiveStamp({
+        text: 'ALUR PATOFISIOLOGI TEPAT!',
+        type: 'fakta'
+      })
+      playSound('stamp')
       setTimeout(() => {
+        setActiveStamp(null)
         saveScoreToDatabase(earnedScore)
         setPhase('completed')
       }, 1500)
     } else {
       playSound('wrong')
+      setIsShaking(true)
+      setTimeout(() => setIsShaking(false), 400)
       setLevel2Validation('wrong')
       setLevel2Mistakes(prev => prev + 1)
       setEarnedScore(prev => Math.max(50, prev - 10))
@@ -491,7 +505,7 @@ export default function Day1LevelC({ onBack, onComplete, misiId = 'misi_h1_c' })
       {/* =========================================================================
           TOP BAR NAVIGASI & PROFIL
          ========================================================================= */}
-      <div className="relative z-30 flex items-center justify-between w-full px-3 py-1.5 sm:px-5 sm:py-2 bg-[#0B4F48]/95 backdrop-blur-md border-b-2 border-emerald-400/30 shadow-md flex-shrink-0">
+      <div className="relative z-30 flex items-center justify-between w-full px-3 py-1 sm:px-4 sm:py-1 bg-[#0B4F48]/95 backdrop-blur-md border-b-2 border-emerald-400/30 shadow-md flex-shrink-0">
         {/* TOMBOL KEMBALI (HANYA MUNCUL DI MENU AWAL, HILANG SAAT SEDANG MEMAINKAN GAME) */}
         {phase === 'intro' ? (
           <button
@@ -499,7 +513,7 @@ export default function Day1LevelC({ onBack, onComplete, misiId = 'misi_h1_c' })
               playSound('click')
               onBack && onBack()
             }}
-            className="flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 text-white font-bold text-xs border border-white/20 transition-all cursor-pointer shadow-sm"
+            className="flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 text-white font-bold text-xs border border-white/20 transition-all cursor-pointer shadow-sm"
           >
             <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -510,14 +524,11 @@ export default function Day1LevelC({ onBack, onComplete, misiId = 'misi_h1_c' })
           <div className="w-6 sm:w-8" />
         )}
 
-        {/* TITLE (TANPA LOGO ANEMIA BUDDY SESUAI PERMINTAAN) */}
+        {/* TITLE */}
         <div className="text-left">
-          <h1 className="text-white font-black text-xs sm:text-sm leading-tight tracking-wide drop-shadow-md">
+          <h1 className="text-white font-black text-xs sm:text-sm md:text-base leading-tight tracking-wide drop-shadow-md">
             MISI SEHAT: MELAWAN ANEMIA
           </h1>
-          <p className="text-emerald-200 text-[8.5px] sm:text-[10px] font-semibold">
-            Game 3 (Level C) • Evaluasi Fakta &amp; Alur Terjadinya Anemia
-          </p>
         </div>
 
         {/* PROFIL SISWA & SKOR (PRESISI DI DALAM WHITE PILL ASSET CROPPED) */}
@@ -542,7 +553,7 @@ export default function Day1LevelC({ onBack, onComplete, misiId = 'misi_h1_c' })
       {/* =========================================================================
           KONTEN BERDASARKAN FASE (BEBAS SCROLL, PAS 1 LAYAR PENUH)
          ========================================================================= */}
-      <div className="relative z-20 flex-1 flex flex-col items-center justify-center p-1 sm:p-2.5 overflow-y-auto custom-scrollbar">
+      <div className="relative z-20 flex-1 flex flex-col items-center justify-center p-0.5 sm:p-1 overflow-y-auto custom-scrollbar">
 
         {/* -----------------------------------------------------------------------
             FASE 0: MAIN MENU & CONCEPT (RESPONSIF LANDSCAPE HP TANPA TERPOTONG)
@@ -667,20 +678,37 @@ export default function Day1LevelC({ onBack, onComplete, misiId = 'misi_h1_c' })
             FASE 1: LEVEL 1 (EVALUASI FAKTA VS MITOS - LAYAR NAIK KE ATAS & KOMPAK)
            ----------------------------------------------------------------------- */}
         {phase === 'level1' && (
-          <div className="w-full max-w-4xl h-full flex flex-col items-center justify-between max-h-[calc(100dvh-48px)] overflow-hidden">
-            {/* SUBHEADER PROGRESS LEVEL 1 */}
+          <div className={`w-full max-w-4xl h-full flex flex-col items-center justify-between max-h-[calc(100dvh-48px)] overflow-hidden ${isShaking ? 'animate-shake' : ''}`}>
+            {/* SUBHEADER PROGRESS LEVEL 1 DENGAN COMBO & TIMER */}
             <div className="w-full bg-white/90 backdrop-blur-md rounded-xl py-0.5 px-2.5 shadow-xs border border-emerald-600/30 flex items-center justify-between gap-2 mb-0.5 flex-shrink-0">
               <div className="flex items-center gap-1.5">
                 <span className="px-2 py-0.5 rounded-full bg-emerald-600 text-white font-extrabold text-[9px] sm:text-xs">
                   MISI 1
                 </span>
                 <span className="text-slate-800 font-extrabold text-xs sm:text-sm">
-                  Pilah-Pilih Tanda Gejala Anemia
+                  Pilah-Pilih Tanda Gejala
                 </span>
+                {/* COMBO STREAK BADGE */}
+                {streakCount >= 2 && (
+                  <span className="px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-white font-black text-[9px] sm:text-[10px] animate-bounce shadow flex items-center gap-0.5">
+                    <span>🔥</span>
+                    <span>{streakCount}x COMBO!</span>
+                  </span>
+                )}
+              </div>
+
+              {/* URGENSI WAKTU (TIMER ADRENALIN) */}
+              <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full border font-black text-[9px] sm:text-xs transition-all ${
+                timeLeft <= 6
+                  ? 'bg-rose-100 text-rose-700 border-rose-400 animate-danger-pulse'
+                  : 'bg-slate-100 text-slate-700 border-slate-300'
+              }`}>
+                <span>⏱️</span>
+                <span>{timeLeft}s</span>
               </div>
 
               {/* PROGRESS BAR */}
-              <div className="flex-1 max-w-[130px] sm:max-w-xs flex items-center gap-1.5">
+              <div className="flex-1 max-w-[100px] sm:max-w-xs flex items-center gap-1.5">
                 <div className="flex-1 h-1.5 rounded-full bg-slate-200 overflow-hidden border border-slate-300">
                   <div
                     className="h-full bg-gradient-to-r from-emerald-500 to-teal-600 transition-all duration-300 rounded-full"
@@ -703,7 +731,7 @@ export default function Day1LevelC({ onBack, onComplete, misiId = 'misi_h1_c' })
             <div className="w-full bg-emerald-50/95 border border-emerald-400 rounded-lg px-2 py-0.5 text-center text-[9px] sm:text-[10px] font-semibold text-emerald-950 mb-0.5 shadow-xs flex items-center justify-center gap-1 flex-shrink-0">
               <span>💡</span>
               <span>
-                Gunakan tombol <b>FAKTA</b> atau <b>MITOS</b>. Pastikan alur anemia bersih dari mitos!
+                Gunakan tombol <b>FAKTA</b> atau <b>MITOS</b>. Raih <b>Combo Streak</b> untuk respon akurat kilat!
               </span>
             </div>
 
@@ -753,14 +781,31 @@ export default function Day1LevelC({ onBack, onComplete, misiId = 'misi_h1_c' })
                 </button>
               </div>
 
-              {/* KARTU DI TENGAH */}
-              <div className="flex flex-col items-center justify-center p-0.5">
+              {/* KARTU DI TENGAH DENGAN STEMPEL & FEVER GLOW */}
+              <div className="flex flex-col items-center justify-center p-0.5 relative">
                 {currentCardIndex < deck.length ? (
                   <div
                     draggable
                     onDragStart={handleDragStart}
-                    className="w-full max-w-[240px] bg-white rounded-2xl p-2 sm:p-2.5 shadow-xl border-2 sm:border-3 border-slate-300 hover:border-emerald-500 transition-all cursor-grab active:cursor-grabbing flex flex-col items-center text-center justify-between h-full max-h-[165px] sm:max-h-[185px] group animate-scaleUp"
+                    className={`relative w-full max-w-[240px] bg-white rounded-2xl p-2 sm:p-2.5 shadow-xl border-2 sm:border-3 transition-all cursor-grab active:cursor-grabbing flex flex-col items-center text-center justify-between h-full max-h-[165px] sm:max-h-[185px] group animate-scaleUp ${
+                      streakCount >= 3
+                        ? 'animate-fever border-amber-400 ring-2 ring-amber-300'
+                        : 'border-slate-300 hover:border-emerald-500'
+                    }`}
                   >
+                    {/* OVERLAY STEMPEL ADRENALIN */}
+                    {activeStamp && (
+                      <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none bg-black/15 rounded-2xl backdrop-blur-[0.5px]">
+                        <div className={`px-3 py-1.5 rounded-xl border-3 font-black text-xs sm:text-sm tracking-wider uppercase shadow-2xl animate-stamp ${
+                          activeStamp.type === 'fakta'
+                            ? 'border-emerald-600 bg-emerald-500 text-white'
+                            : 'border-rose-600 bg-rose-500 text-white'
+                        }`}>
+                          {activeStamp.text}
+                        </div>
+                      </div>
+                    )}
+
                     <div className="w-full flex items-center justify-between flex-shrink-0">
                       <span className="text-[8px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded-full bg-teal-100 text-teal-800">
                         {deck[currentCardIndex].category}
@@ -884,7 +929,16 @@ export default function Day1LevelC({ onBack, onComplete, misiId = 'misi_h1_c' })
             FASE 2: LEVEL 2 (MEMBANGUN ALUR ANEMIA - LEBIH LAPANG, BEBAS BENTROK)
            ----------------------------------------------------------------------- */}
         {phase === 'level2' && (
-          <div className="w-full max-w-4xl h-full flex flex-col items-center justify-between max-h-[calc(100dvh-48px)] overflow-hidden">
+          <div className={`w-full max-w-4xl h-full flex flex-col items-center justify-between max-h-[calc(100dvh-48px)] overflow-hidden relative ${isShaking ? 'animate-shake' : ''}`}>
+            {/* OVERLAY STEMPEL KEMENANGAN ALUR */}
+            {activeStamp && (
+              <div className="absolute inset-0 z-50 flex items-center justify-center pointer-events-none bg-black/20 rounded-2xl backdrop-blur-[1px]">
+                <div className="px-5 py-2.5 rounded-2xl border-4 border-emerald-500 bg-emerald-600 text-white font-black text-sm sm:text-base tracking-wider uppercase shadow-2xl animate-stamp">
+                  {activeStamp.text}
+                </div>
+              </div>
+            )}
+
             {/* SUBHEADER & TAG */}
             <div className="w-full bg-white/90 backdrop-blur-md rounded-xl py-0.5 px-2.5 shadow-xs border border-teal-600/30 flex items-center justify-between gap-2 mb-0.5 flex-shrink-0">
               <div className="flex items-center gap-1.5">
@@ -896,12 +950,6 @@ export default function Day1LevelC({ onBack, onComplete, misiId = 'misi_h1_c' })
                 </span>
               </div>
 
-              {/* PILL TAG "PENYEBAB" */}
-              <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-black text-[9px] border border-emerald-300">
-                <span>🏷️</span>
-                <span>Penyebab</span>
-              </div>
-
               {/* SKOR SEMENTARA */}
               <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300 font-black text-[9.5px] sm:text-xs">
                 <span>⭐ Skor:</span>
@@ -911,6 +959,14 @@ export default function Day1LevelC({ onBack, onComplete, misiId = 'misi_h1_c' })
 
             {/* TIMELINE PUZZLE TRACK [MULAI] -> [SLOT 1..4] -> [ANEMIA TERJADI] */}
             <div className="w-full bg-white/90 backdrop-blur-md rounded-xl p-1 shadow-sm border border-teal-700/30 mb-0.5 flex-shrink-0">
+              {/* FLOWING BLOODLINE ENERGY BAR */}
+              <div className="w-full h-1 bg-slate-200 rounded-full mb-1 overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-emerald-500 via-teal-400 to-rose-500 transition-all duration-500"
+                  style={{ width: `${Math.max(10, (slots.filter(Boolean).length / 4) * 100)}%` }}
+                />
+              </div>
+
               <div className="flex flex-row items-center justify-between gap-1 sm:gap-1.5">
 
                 {/* NODE MULAI (HIJAU) */}

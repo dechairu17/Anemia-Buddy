@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase'
 
 // IMPORT ASET GAMBAR MISI 1B
 import bgTexture from '../../assets/9. day 1 level B/background 9.png'
+import bgPapanUngu from '../../assets/9. day 1 level B/background papann ungu.png'
 import bannerMisiCrop from '../../assets/9. day 1 level B/misi_crop.png'
 import karakterSiswiCrop from '../../assets/9. day 1 level B/karakter_crop.png'
 import berhasilTercatatCrop from '../../assets/9. day 1 level B/berhasil_tercatat_crop.png'
@@ -22,82 +23,8 @@ import kukuCircleImg from '../../assets/9. day 1 level B/kuku_circle.png'
 import lelahCircleImg from '../../assets/9. day 1 level B/mudah_lelah_circle.png'
 
 // AUDIO SYNTHESIZER UNTUK SOUND EFFECT
-const playAudioFeedback = (type) => {
-  try {
-    const AudioContext = window.AudioContext || window.webkitAudioContext
-    if (!AudioContext) return
-    const ctx = new AudioContext()
-    const now = ctx.currentTime
-
-    if (type === 'click') {
-      const osc = ctx.createOscillator()
-      const gain = ctx.createGain()
-      osc.type = 'sine'
-      osc.frequency.setValueAtTime(480, now)
-      osc.frequency.exponentialRampToValueAtTime(750, now + 0.08)
-      gain.gain.setValueAtTime(0.2, now)
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08)
-      osc.connect(gain)
-      gain.connect(ctx.destination)
-      osc.start(now)
-      osc.stop(now + 0.08)
-    } else if (type === 'found') {
-      const notes = [523.25, 659.25, 783.99, 1046.50]
-      notes.forEach((freq, idx) => {
-        const osc = ctx.createOscillator()
-        const gain = ctx.createGain()
-        osc.type = 'triangle'
-        osc.frequency.setValueAtTime(freq, now + idx * 0.07)
-        gain.gain.setValueAtTime(0.25, now + idx * 0.07)
-        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.07 + 0.18)
-        osc.connect(gain)
-        gain.connect(ctx.destination)
-        osc.start(now + idx * 0.07)
-        osc.stop(now + idx * 0.07 + 0.18)
-      })
-    } else if (type === 'correct') {
-      const osc = ctx.createOscillator()
-      const gain = ctx.createGain()
-      osc.type = 'sine'
-      osc.frequency.setValueAtTime(587.33, now)
-      osc.frequency.setValueAtTime(880, now + 0.1)
-      gain.gain.setValueAtTime(0.3, now)
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35)
-      osc.connect(gain)
-      gain.connect(ctx.destination)
-      osc.start(now)
-      osc.stop(now + 0.35)
-    } else if (type === 'wrong') {
-      const osc = ctx.createOscillator()
-      const gain = ctx.createGain()
-      osc.type = 'sawtooth'
-      osc.frequency.setValueAtTime(220, now)
-      osc.frequency.setValueAtTime(164.81, now + 0.12)
-      gain.gain.setValueAtTime(0.25, now)
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28)
-      osc.connect(gain)
-      gain.connect(ctx.destination)
-      osc.start(now)
-      osc.stop(now + 0.28)
-    } else if (type === 'win') {
-      const fanfare = [523.25, 659.25, 783.99, 1046.50, 1318.51]
-      fanfare.forEach((freq, idx) => {
-        const osc = ctx.createOscillator()
-        const gain = ctx.createGain()
-        osc.type = 'triangle'
-        osc.frequency.setValueAtTime(freq, now + idx * 0.1)
-        gain.gain.setValueAtTime(0.3, now + idx * 0.1)
-        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.1 + 0.35)
-        osc.connect(gain)
-        gain.connect(ctx.destination)
-        osc.start(now + idx * 0.1)
-        osc.stop(now + idx * 0.1 + 0.35)
-      })
-    }
-  } catch {
-    // Autoplay policy browser
-  }
-}
+import { playSound } from '../../utils/audio'
+const playAudioFeedback = (type) => playSound(type)
 
 // 4 DATA GEJALA SISWI DENGAN KOORDINAT PERSENTASE RELATIF TERHADAP KARAKTER (URUTAN PERSIS GAMBAR 2 & GAMBAR 1)
 const SYMPTOMS_DATA = [
@@ -360,6 +287,7 @@ function Day1LevelB({ onBack, onComplete }) {
     playAudioFeedback('click')
     if (!discoveredSymptoms.includes(symptom.id)) {
       playAudioFeedback('found')
+      setTimeout(() => playAudioFeedback('stamp'), 150)
       setDiscoveredSymptoms((prev) => [...prev, symptom.id])
     }
     setActivePopupSymptom(symptom)
@@ -411,7 +339,7 @@ function Day1LevelB({ onBack, onComplete }) {
     const calculatedScore = Math.round((correctCount / 4) * 100)
     setEarnedScore(calculatedScore)
 
-    playAudioFeedback(correctCount > 2 ? 'win' : 'wrong')
+    playAudioFeedback(correctCount > 2 ? 'cring' : 'wrong')
     saveScoreToSupabase(calculatedScore)
     setIsSubmitted(true)
     setShowScoreModal(true)
@@ -421,8 +349,8 @@ function Day1LevelB({ onBack, onComplete }) {
     <div
       className="w-dvw h-dvh overflow-hidden font-sans select-none relative flex items-center justify-center"
       style={{
-        backgroundImage: `url("${bgTexture}")`,
-        backgroundSize: 'cover',
+        backgroundImage: stage === 'match_causes' ? `url("${bgPapanUngu}")` : `url("${bgTexture}")`,
+        backgroundSize: '100% 100%',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat'
       }}
@@ -519,7 +447,7 @@ function Day1LevelB({ onBack, onComplete }) {
               <img
                 src={karakterSiswiCrop}
                 alt="Siswi Mengalami Anemia"
-                className="w-full h-full object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.65)] pointer-events-none"
+                className="w-full h-full object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.65)] pointer-events-none animate-heartbeat"
               />
 
               {/* 4 TITIK SENTUH TOMBOL KLIK KUNING (SCALED BERSAMA KARAKTER) */}
@@ -552,10 +480,14 @@ function Day1LevelB({ onBack, onComplete }) {
               })}
             </div>
 
-            {/* 4. POPUP KANAN SAAT TITIK DIKLIK ("Ditemukan!" - DIPOSISIKAN BERSIH AGAR TIDAK MENABRAK TOMBOL SELANJUTNYA) */}
+            {/* 4. POPUP KANAN SAAT TITIK DIKLIK ("Ditemukan!" - DENGAN STEMPEL TERDETEKSI) */}
             {activePopupSymptom && (
               <div className="absolute right-[4%] top-[24%] w-[31%] max-w-[340px] aspect-[1446/964] z-30 animate-in zoom-in-95 duration-150">
                 <div className="relative w-full h-full">
+                  {/* STEMPEL IDENTIFIKASI */}
+                  <div className="absolute top-[4%] left-[5%] z-40 bg-emerald-600 text-white font-black text-[9px] sm:text-[11px] px-2 py-0.5 rounded-lg border border-emerald-300 shadow-md animate-stamp">
+                    ✓ TERDETEKSI!
+                  </div>
                   <img
                     src={activePopupSymptom.modalImg}
                     alt={activePopupSymptom.name}
@@ -601,25 +533,12 @@ function Day1LevelB({ onBack, onComplete }) {
             TAHAP 3: BUKU CATATAN DETEKTIF - HASIL INVESTIGASI (GAMBAR 1 USER)
            ========================================================================= */}
         {/* =========================================================================
-            TAHAP 2: BUKU CATATAN DETEKTIF - HASIL INVESTIGASI (MEMILIH JAWABAN)
-           ========================================================================= */}
-        {/* =========================================================================
-            TAHAP 2: BUKU CATATAN DETEKTIF - HASIL INVESTIGASI (MEMILIH 4 PENYEBAB)
-            {/* =========================================================================
-            TAHAP 2: BUKU CATATAN DETEKTIF - HASIL INVESTIGASI (MEMILIH 4 PENYEBAB)
+            TAHAP 2: BUKU CATATAN DETEKTIF - HASIL INVESTIGASI (LEBAR & PENJEPIT JELAS)
            ========================================================================= */}
         {stage === 'match_causes' && (
-          <div className="relative w-full h-full pt-4 pb-2 px-2 sm:px-3 flex items-center justify-center">
-            {/* PAPAN BUKU: 4 GEJALA & 8 LOG AKTIVITAS */}
-            <div className="relative w-[96%] max-w-[1080px] h-[89%] max-h-[560px] bg-white rounded-2xl sm:rounded-3xl border-[4px] sm:border-[6px] border-[#3B82F6] shadow-[0_15px_40px_rgba(0,0,0,0.55)] p-2 sm:p-2.5 flex flex-col justify-between overflow-hidden">
-              
-              {/* CLIP KAYU ATAS */}
-              <div className="absolute -top-3 sm:-top-3.5 left-1/2 -translate-x-1/2 w-24 sm:w-32 h-4.5 sm:h-5.5 bg-[#D97706] rounded-t-lg border-2 border-[#B45309] shadow-sm flex items-center justify-center z-20">
-                <div className="w-3 h-3 rounded-full border-2 border-white bg-white shadow-xs" />
-              </div>
-
-              {/* HEADER MODAL */}
-              <div className="flex items-center justify-between border-b pb-1 border-slate-200 mt-0.5 shrink-0">
+          <div className="relative w-full h-full flex flex-col justify-between pt-[7.2%] pb-[3.5%] px-[4.5%] sm:px-[5.5%] overflow-hidden animate-fadeIn">
+            {/* HEADER MODAL */}
+            <div className="flex items-center justify-between border-b pb-1 border-slate-300 mt-0.5 shrink-0">
                 <div className="flex items-center gap-1.5">
                   <span className="text-base sm:text-lg">📋</span>
                   <h2 className="text-[#1E293B] font-black text-xs sm:text-sm uppercase tracking-wide">
@@ -819,7 +738,10 @@ function Day1LevelB({ onBack, onComplete }) {
                 ) : (
                   <div className="w-full flex items-center justify-between gap-2">
                     <button
-                      onClick={() => setShowScoreModal(true)}
+                      onClick={() => {
+                        playAudioFeedback('cring')
+                        setShowScoreModal(true)
+                      }}
                       className="bg-amber-500 hover:bg-amber-600 text-white font-black text-[10px] sm:text-xs px-4 py-1.5 rounded-full shadow transition-all cursor-pointer flex items-center gap-1"
                     >
                       <span>⭐ Lihat Skor Modal</span>
@@ -838,8 +760,6 @@ function Day1LevelB({ onBack, onComplete }) {
                   </div>
                 )}
               </div>
-
-            </div>
           </div>
         )}
 
@@ -869,6 +789,12 @@ function Day1LevelB({ onBack, onComplete }) {
                 <span className="text-amber-600 font-black text-xl sm:text-2xl">
                   {earnedScore} PTS
                 </span>
+              </div>
+
+              {/* GELAR DETEKTIF MEDIS */}
+              <div className="w-full mb-2.5 px-3 py-1 rounded-xl bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-amber-950 font-black text-[10px] sm:text-[11px] shadow-sm border border-amber-300 flex items-center justify-center gap-1.5 animate-bounce">
+                <span>🎖️</span>
+                <span>GELAR: {earnedScore >= 100 ? 'DETEKTIF MEDIS CERMAT & TANGGAP' : 'DETEKTIF MEDIS PEMBELAJAR'}</span>
               </div>
 
               <div className="w-full flex flex-col gap-1.5 flex-shrink-0">

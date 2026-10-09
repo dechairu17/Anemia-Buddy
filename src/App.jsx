@@ -13,7 +13,8 @@ import MisiHarian from './components/game/MisiHarian'
 import Day1LevelA from './components/game/Day1LevelA' // Komponen Game Day 1 Level A
 import Day1LevelB from './components/game/Day1LevelB' // Komponen Game Day 1 Level B
 import Day1LevelC from './components/game/Day1LevelC' // Komponen Game Day 1 Level C / Game 3
-import Day1LevelD from './components/game/Day1LevelD' // Komponen Game Day 1 Level D / Game 4 (Dokter Sel Darah & Hemo)
+import Day1LevelD from './components/game/Day1LevelD' // Komponen Game Day 1 Level D / Game 4 (Evaluasi Sikap)
+import Day1LevelE from './components/game/Day1LevelE' // Komponen Game Day 1 Level E (Misi E Mandiri)
 
 function App() {
   const [currentPage, setCurrentPage] = useState('login')
@@ -164,13 +165,25 @@ function App() {
         />
       )}
 
-      {/* MODUL GAMEPLAY DAY 1 LEVEL D / LEVEL E / GAME 4 (EVALUASI SIKAP SEHAT ANEMIA) */}
-      {(currentPage === 'day1_level_d' || currentPage === 'day1_level_e' || currentPage === 'game_4') && (
+      {/* MODUL GAMEPLAY DAY 1 LEVEL D / GAME 4 (EVALUASI SIKAP SEHAT ANEMIA) */}
+      {(currentPage === 'day1_level_d' || currentPage === 'game_4') && (
         <Day1LevelD 
-          misiId={currentPage === 'day1_level_e' ? 'misi_h1_e' : 'misi_h1_d'}
+          misiId="misi_h1_d"
           onBack={() => setCurrentPage('game_level_1')}
           onComplete={(result) => {
-            console.log('Game Selesai:', result)
+            console.log('Game 4 (Day 1 Level D) Selesai:', result)
+            setCurrentPage('game_level_1')
+          }}
+        />
+      )}
+
+      {/* MODUL GAMEPLAY DAY 1 LEVEL E / GAME 5 (MISI LEVEL E MANDIRI) */}
+      {currentPage === 'day1_level_e' && (
+        <Day1LevelE 
+          misiId="misi_h1_e"
+          onBack={() => setCurrentPage('game_level_1')}
+          onComplete={(result) => {
+            console.log('Game 5 (Day 1 Level E) Selesai:', result)
             setCurrentPage('game_level_1')
           }}
         />
