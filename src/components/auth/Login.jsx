@@ -186,6 +186,19 @@ function Login({ onLogin }) {
                     : 'Mulai'}
               </button>
             </div>
+
+            {/* Tombol Unduh File APK Android Langsung */}
+            <div className="flex justify-center mt-1">
+              <a
+                href="/anemia-buddy.apk"
+                download="Anemia-Buddy.apk"
+                className="flex items-center gap-1.5 text-[11px] sm:text-xs font-bold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-4 py-1.5 rounded-full border border-slate-300 transition-all active:scale-95 shadow-xs"
+                title="Unduh File APK Android"
+              >
+                <span>📥</span>
+                <span>Download Aplikasi Android (.APK)</span>
+              </a>
+            </div>
           </form>
 
         </div>
