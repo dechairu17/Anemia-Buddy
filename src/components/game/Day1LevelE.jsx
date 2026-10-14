@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { supabase } from '../../lib/supabase'
 import { playSound } from '../../utils/audio'
+import ScoreRaceLeaderboardModal from './ScoreRaceLeaderboardModal'
 
 // ASSETS
 import bgProfilPria from '../../assets/6/game home - profil pria_crop.png'
@@ -14,6 +15,7 @@ export default function Day1LevelE({ onBack, onComplete, misiId = 'misi_h1_e' })
   const [earnedScore, setEarnedScore] = useState(100)
   const [alreadyCompleted, setAlreadyCompleted] = useState(false)
   const [existingScore, setExistingScore] = useState(0)
+  const [showLeaderboard, setShowLeaderboard] = useState(false)
 
   const username = localStorage.getItem('anemia_username') || 'Siswa'
   const startTimeRef = useRef(Date.now())
@@ -234,12 +236,12 @@ export default function Day1LevelE({ onBack, onComplete, misiId = 'misi_h1_e' })
             <button
               onClick={() => {
                 playSound('click')
-                onComplete && onComplete({ score: earnedScore, missionId: 'misi_h1_e' })
-                onBack && onBack()
+                setShowLeaderboard(true)
               }}
-              className="w-full bg-[#1E1B4B] hover:bg-[#110E38] active:scale-95 text-white font-black py-2.5 px-4 rounded-xl shadow text-xs uppercase tracking-wider cursor-pointer transition-all"
+              className="w-full bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:from-amber-400 hover:to-yellow-300 active:scale-95 text-slate-950 font-black py-2.5 px-4 rounded-xl shadow-lg text-xs uppercase tracking-wider cursor-pointer transition-all flex items-center justify-center gap-2 border border-amber-300"
             >
-              Kembali ke Menu Misi ➔
+              <span>Lanjut (Lihat Balapan Skor 🏁)</span>
+              <span className="text-sm font-black">➔</span>
             </button>
           </div>
         )}
@@ -278,6 +280,23 @@ export default function Day1LevelE({ onBack, onComplete, misiId = 'misi_h1_e' })
           </div>
         </div>
       )}
+      {/* MODAL BALAPAN SKOR / LEADERBOARD */}
+      <ScoreRaceLeaderboardModal
+        isOpen={showLeaderboard}
+        currentMissionId="misi_h1_e"
+        currentMissionTitle="Misi E: Dokter Mandiri"
+        currentScore={earnedScore}
+        nextMissionKey={null}
+        nextMissionTitle="Selesai Misi Hari 1"
+        onNext={() => {
+          onComplete && onComplete({ score: earnedScore, missionId: 'misi_h1_e' })
+          onBack && onBack()
+        }}
+        onBackToMenu={() => {
+          onComplete && onComplete({ score: earnedScore, missionId: 'misi_h1_e' })
+          onBack && onBack()
+        }}
+      />
     </div>
   )
 }

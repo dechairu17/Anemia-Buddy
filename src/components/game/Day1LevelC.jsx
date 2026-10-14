@@ -11,6 +11,11 @@ import imgPenyebab from '../../assets/3/3. materi - penyebab.png'
 
 // AUDIO SYNTHESIZER UNTUK SOUND EFFECT REAL-TIME
 import { playSound } from '../../utils/audio'
+import ScoreRaceLeaderboardModal from './ScoreRaceLeaderboardModal'
+
+// IMPORT ASET TONG SAMPAH FAKTA & MITOS
+import tongFaktaImg from '../../assets/8. day 1 level C/tong fakta.png'
+import tongMitosImg from '../../assets/8. day 1 level C/tong mitos.png'
 
 // DATA KARTU LEVEL 1: EVALUASI FAKTA VS MITOS TANDA GEJALA
 const CARDS_LEVEL_1 = [
@@ -139,6 +144,7 @@ export default function Day1LevelC({ onBack, onComplete, misiId = 'misi_h1_c' })
   const [level2Validation, setLevel2Validation] = useState(null) // null | 'correct' | 'wrong'
   const [level2Mistakes, setLevel2Mistakes] = useState(0)
   const [showLevel2WrongModal, setShowLevel2WrongModal] = useState(false)
+  const [showLeaderboard, setShowLeaderboard] = useState(false)
 
   const username = localStorage.getItem('anemia_username') || 'Siswa'
   const startTimeRef = useRef(Date.now())
@@ -764,8 +770,12 @@ export default function Day1LevelC({ onBack, onComplete, misiId = 'misi_h1_c' })
                 </div>
 
                 <div className="my-auto py-1 text-center flex-1 flex flex-col items-center justify-center">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-emerald-500/30 border border-dashed border-emerald-300 flex items-center justify-center mb-1 text-sm sm:text-lg text-emerald-200">
-                    📥
+                  <div className="relative w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 flex items-center justify-center mb-1 transition-transform group-hover:scale-105">
+                    <img
+                      src={tongFaktaImg}
+                      alt="Tong Fakta"
+                      className="w-full h-full object-contain drop-shadow-[0_8px_16px_rgba(0,0,0,0.4)] pointer-events-none"
+                    />
                   </div>
                   <p className="text-emerald-100 text-[9.5px] sm:text-[10.5px] font-medium px-1 leading-tight line-clamp-2">
                     Tarik kartu ke sini jika ini FAKTA medis anemia
@@ -861,8 +871,12 @@ export default function Day1LevelC({ onBack, onComplete, misiId = 'misi_h1_c' })
                 </div>
 
                 <div className="my-auto py-0.5 text-center flex-1 flex flex-col items-center justify-center">
-                  <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-rose-500/30 border border-dashed border-rose-300 flex items-center justify-center mb-0.5 text-xs sm:text-base text-rose-200">
-                    🗑️
+                  <div className="relative w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 flex items-center justify-center mb-1 transition-transform group-hover:scale-105">
+                    <img
+                      src={tongMitosImg}
+                      alt="Tong Mitos"
+                      className="w-full h-full object-contain drop-shadow-[0_8px_16px_rgba(0,0,0,0.4)] pointer-events-none"
+                    />
                   </div>
                   <p className="text-rose-100 text-[9px] sm:text-[10px] font-medium px-1 leading-tight line-clamp-2">
                     Tarik atau tekan tombol di bawah jika ini MITOS
@@ -1202,16 +1216,17 @@ export default function Day1LevelC({ onBack, onComplete, misiId = 'misi_h1_c' })
               </div>
             </div>
 
-            {/* TOMBOL AKSI: SELESAI & SIMPAN SKOR (HANYA 1X MAIN - PENELITIAN) */}
+            {/* TOMBOL AKSI: SELESAI & SIMPAN SKOR (LANJUT KE BALAPAN LEADERBOARD) */}
             <div className="w-full flex items-center justify-center mt-1 pt-1.5 border-t border-slate-200">
               <button
                 onClick={() => {
                   playSound('click')
-                  onComplete && onComplete({ score: earnedScore })
+                  setShowLeaderboard(true)
                 }}
-                className="w-full max-w-sm py-2 sm:py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 active:scale-95 text-white font-black text-xs sm:text-sm shadow-lg transition-all cursor-pointer border border-emerald-400 flex items-center justify-center gap-2"
+                className="w-full max-w-sm py-2 sm:py-2.5 rounded-xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:from-amber-400 hover:to-yellow-300 active:scale-95 text-slate-950 font-black text-xs sm:text-sm shadow-lg transition-all cursor-pointer border border-amber-300 flex items-center justify-center gap-2"
               >
-                <span>✓ Selesai &amp; Simpan Skor</span>
+                <span>Lanjut (Lihat Balapan Skor 🏁)</span>
+                <span className="text-base font-black">➔</span>
               </button>
             </div>
 
@@ -1334,6 +1349,23 @@ export default function Day1LevelC({ onBack, onComplete, misiId = 'misi_h1_c' })
           </div>
         </div>
       )}
+
+      {/* MODAL BALAPAN SKOR / LEADERBOARD */}
+      <ScoreRaceLeaderboardModal
+        isOpen={showLeaderboard}
+        currentMissionId="misi_h1_c"
+        currentMissionTitle="Misi C: Melawan Anemia"
+        currentScore={earnedScore}
+        nextMissionKey="D"
+        nextMissionTitle="Misi D (Detektif Gejala)"
+        onNext={() => {
+          onComplete && onComplete({ score: earnedScore, missionId: 'misi_h1_c', nextMission: 'd' })
+        }}
+        onBackToMenu={() => {
+          onComplete && onComplete({ score: earnedScore, missionId: 'misi_h1_c' })
+          onBack && onBack()
+        }}
+      />
     </div>
   )
 }

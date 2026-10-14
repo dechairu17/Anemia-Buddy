@@ -6,6 +6,7 @@ import bgDay1A from '../../assets/8. day 1 level A/8 BACKGROUND .png'
 import cardBackImg from '../../assets/8. day 1 level A/46.png'
 import mascotImg from '../../assets/9. day 1 level B/karakter.png'
 import { playSound } from '../../utils/audio'
+import ScoreRaceLeaderboardModal from './ScoreRaceLeaderboardModal'
 
 // KOMPONEN LONCENG 3D NOTIFIKASI
 function NotificationBell() {
@@ -140,6 +141,10 @@ function Day1LevelA({ onBack, onComplete }) {
   const [alreadyCompleted, setAlreadyCompleted] = useState(false)
   const [existingScore, setExistingScore] = useState(0)
 
+  // Jeda 10 detik membaca kartu setelah semua flip terbuka
+  const [readingCountdown, setReadingCountdown] = useState(null)
+  const [showLeaderboard, setShowLeaderboard] = useState(false)
+
   // Durasi pengerjaan
   const startTimeRef = useRef(Date.now())
 
@@ -254,11 +259,11 @@ function Day1LevelA({ onBack, onComplete }) {
           setTimeout(() => setMatchMessage(''), 1400)
 
           // JIKA SEMUA 3 PASANGAN (6 KARTU) SELESAI
+          // TERJEDA 10 DETIK AGAR KARTU BISA DIBACA TERLEBIH DAHULU
           if (updatedMatched.length === 3) {
             setTimeout(() => {
-              playSound('cring')
-              saveScoreToSupabase(earnedScore)
-              setGameState('completed')
+              playSound('correct')
+              setReadingCountdown(10)
             }, 600)
           }
         }, 700)
@@ -292,11 +297,56 @@ function Day1LevelA({ onBack, onComplete }) {
     }
   }
 
+  // TIMER HITUNG MUNDUR 10 DETIK MEMBACA KARTU
+  useEffect(() => {
+    if (readingCountdown === null) return
+    if (readingCountdown > 0) {
+      const timer = setTimeout(() => {
+        setReadingCountdown(prev => prev - 1)
+      }, 1000)
+      return () => clearTimeout(timer)
+    } else if (readingCountdown === 0) {
+      // 10 Detik telah berlalu -> simpan skor & tampilkan modal hasil
+      playSound('cring')
+      saveScoreToSupabase(earnedScore)
+      setGameState('completed')
+      setReadingCountdown(null)
+    }
+  }, [readingCountdown])
+
+  const handleSkipReading = () => {
+    playSound('cring')
+    saveScoreToSupabase(earnedScore)
+    setGameState('completed')
+    setReadingCountdown(null)
+  }
+
   return (
     <div 
       className={`h-dvh w-dvw ${gameState === 'playing' ? 'bg-cover bg-center bg-no-repeat' : 'bg-[#003049]'} relative overflow-hidden font-sans select-none touch-none flex flex-col items-center justify-center p-3 sm:p-6`}
       style={{ backgroundImage: gameState === 'playing' ? `url("${bgDay1A}")` : 'none' }}
     >
+      {/* FLOATING BANNER HITUNG MUNDUR MEMBACA KARTU 10 DETIK */}
+      {readingCountdown !== null && readingCountdown > 0 && (
+        <div className="absolute top-16 sm:top-20 z-50 bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-slate-950 font-black px-4 py-2 rounded-2xl shadow-2xl border-2 border-white flex items-center gap-3 animate-bounce max-w-[92%]">
+          <span className="text-xl sm:text-2xl">📖</span>
+          <div className="text-left leading-tight">
+            <span className="text-[10px] sm:text-xs uppercase tracking-wide block font-black text-amber-950">
+              Hebat! Semua Kartu Terbuka. Baca Edukasi Dulu:
+            </span>
+            <span className="text-xs sm:text-sm font-black text-red-900">
+              Skor akan muncul dalam <span className="bg-red-700 text-white px-2 py-0.5 rounded-lg text-sm sm:text-base font-black shadow-xs">{readingCountdown}s</span>...
+            </span>
+          </div>
+          <button
+            onClick={handleSkipReading}
+            className="ml-auto bg-slate-950 hover:bg-slate-800 active:scale-95 text-white font-black text-[10px] sm:text-xs px-3 py-1.5 rounded-xl shadow transition-all cursor-pointer whitespace-nowrap border border-white/40"
+          >
+            Buka Skor Sekarang ➔
+          </button>
+        </div>
+      )}
+
       {/* TOMBOL KEMBALI (HANYA MUNCUL DI INTRO, HILANG SAAT SEDANG BERMAIN) */}
       {gameState === 'intro' && (
         <button 
@@ -566,18 +616,33 @@ function Day1LevelA({ onBack, onComplete }) {
 
             <div className="w-full flex-shrink-0">
               <button
-                onClick={() => {
-                  onComplete && onComplete({ score: earnedScore, missionId: 'misi_h1_a' })
-                  onBack && onBack()
-                }}
-                className="w-full bg-[#b10825] hover:bg-[#8B0000] text-white font-extrabold py-2 px-4 rounded-full shadow-lg hover:shadow-xl transition-all active:scale-95 cursor-pointer text-xs uppercase tracking-wider"
+                onClick={() => setShowLeaderboard(true)}
+                className="w-full bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black py-2.5 px-4 rounded-full shadow-lg hover:shadow-xl transition-all active:scale-95 cursor-pointer text-xs uppercase tracking-wider flex items-center justify-center gap-2 border border-amber-300"
               >
-                Selesai &amp; Lanjut ➡️
+                <span>Lanjut (Lihat Balapan Skor 🏁)</span>
+                <span className="text-sm font-black">➔</span>
               </button>
             </div>
           </div>
         </div>
       )}
+
+      {/* MODAL BALAPAN SKOR / LEADERBOARD */}
+      <ScoreRaceLeaderboardModal
+        isOpen={showLeaderboard}
+        currentMissionId="misi_h1_a"
+        currentMissionTitle="Misi A: Memori Kartu"
+        currentScore={earnedScore}
+        nextMissionKey="B"
+        nextMissionTitle="Misi B (Evaluasi Sikap)"
+        onNext={() => {
+          onComplete && onComplete({ score: earnedScore, missionId: 'misi_h1_a', nextMission: 'b' })
+        }}
+        onBackToMenu={() => {
+          onComplete && onComplete({ score: earnedScore, missionId: 'misi_h1_a' })
+          onBack && onBack()
+        }}
+      />
 
     </div>
   )

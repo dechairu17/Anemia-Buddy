@@ -138,41 +138,58 @@ function App() {
           onBack={() => setCurrentPage('game_level_1')}
           onComplete={(result) => {
             console.log('Day 1 Level A Selesai:', result)
-            setCurrentPage('game_level_1')
+            if (result?.nextMission) {
+              setCurrentPage(`day1_level_${result.nextMission.toLowerCase()}`)
+            } else {
+              setCurrentPage('game_level_1')
+            }
           }}
         />
       )}
 
-      {/* MODUL GAMEPLAY DAY 1 LEVEL B */}
+      {/* MODUL GAMEPLAY DAY 1 LEVEL B (EVALUASI SIKAP) */}
       {currentPage === 'day1_level_b' && (
         <Day1LevelB 
+          misiId="misi_h1_b"
           onBack={() => setCurrentPage('game_level_1')}
           onComplete={(result) => {
             console.log('Day 1 Level B Selesai:', result)
-            setCurrentPage('game_level_1')
+            if (result?.nextMission) {
+              setCurrentPage(`day1_level_${result.nextMission.toLowerCase()}`)
+            } else {
+              setCurrentPage('game_level_1')
+            }
           }}
         />
       )}
 
-      {/* MODUL GAMEPLAY DAY 1 LEVEL C / GAME 3 */}
+      {/* MODUL GAMEPLAY DAY 1 LEVEL C / GAME 3 (MISI SEHAT: MELAWAN ANEMIA) */}
       {(currentPage === 'day1_level_c' || currentPage === 'game_3') && (
         <Day1LevelC 
           onBack={() => setCurrentPage('game_level_1')}
           onComplete={(result) => {
             console.log('Game 3 (Day 1 Level C) Selesai:', result)
-            setCurrentPage('game_level_1')
+            if (result?.nextMission) {
+              setCurrentPage(`day1_level_${result.nextMission.toLowerCase()}`)
+            } else {
+              setCurrentPage('game_level_1')
+            }
           }}
         />
       )}
 
-      {/* MODUL GAMEPLAY DAY 1 LEVEL D / GAME 4 (EVALUASI SIKAP SEHAT ANEMIA) */}
+      {/* MODUL GAMEPLAY DAY 1 LEVEL D / GAME 4 (DETEKTIF GEJALA ANEMIA) */}
       {(currentPage === 'day1_level_d' || currentPage === 'game_4') && (
         <Day1LevelD 
           misiId="misi_h1_d"
           onBack={() => setCurrentPage('game_level_1')}
           onComplete={(result) => {
             console.log('Game 4 (Day 1 Level D) Selesai:', result)
-            setCurrentPage('game_level_1')
+            if (result?.nextMission) {
+              setCurrentPage(`day1_level_${result.nextMission.toLowerCase()}`)
+            } else {
+              setCurrentPage('game_level_1')
+            }
           }}
         />
       )}
@@ -184,7 +201,11 @@ function App() {
           onBack={() => setCurrentPage('game_level_1')}
           onComplete={(result) => {
             console.log('Game 5 (Day 1 Level E) Selesai:', result)
-            setCurrentPage('game_level_1')
+            if (result?.nextMission) {
+              setCurrentPage(`day1_level_${result.nextMission.toLowerCase()}`)
+            } else {
+              setCurrentPage('game_level_1')
+            }
           }}
         />
       )}
