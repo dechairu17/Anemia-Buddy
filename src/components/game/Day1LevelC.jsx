@@ -1,257 +1,214 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { supabase } from '../../lib/supabase'
 
-// IMPORT ASET RESMI PROYEK (CROPPED PROFILE & NO RED TEXTURE)
-import mascotSiswi from '../../assets/9. day 1 level B/karakter.png'
-import bgProfilPria from '../../assets/6/game home - profil pria_crop.png'
-import bgProfilWanita from '../../assets/6/game home - profil wanita_crop.png'
-import imgDarahO2 from '../../assets/5/5. kuis - darah & o2.png'
-import imgSumberMakanan from '../../assets/3/3. materi - sumber makanan.png'
-import imgPenyebab from '../../assets/3/3. materi - penyebab.png'
+// IMPORT ASET GAMBAR MISI DETEKTIF GEJALA
+import bgTexture from '../../assets/9. day 1 level B/background 9.png'
+import bgPapanUngu from '../../assets/9. day 1 level B/background papann ungu.png'
+import bannerMisiCrop from '../../assets/9. day 1 level B/misi_crop.png'
+import karakterSiswiCrop from '../../assets/9. day 1 level B/karakter_crop.png'
+import berhasilTercatatCrop from '../../assets/9. day 1 level B/berhasil_tercatat_crop.png'
+import selanjutnyaCrop from '../../assets/9. day 1 level B/selanjutnya_crop.png'
+import tombolKlikImg from '../../assets/9. day 1 level B/tombol klik.png'
 
-// AUDIO SYNTHESIZER UNTUK SOUND EFFECT REAL-TIME
+// MODAL IMAGES (UNTUK POPUP DITEMUKAN)
+import mataModalImg from '../../assets/9. day 1 level B/mata pucat_modal.png'
+import bibirModalImg from '../../assets/9. day 1 level B/bibir pucat_modal.png'
+import kukuModalImg from '../../assets/9. day 1 level B/kuku pucat_modal.png'
+import lelahModalImg from '../../assets/9. day 1 level B/mudah lelah_modal.png'
+
+// CIRCLE IMAGES (UNTUK TAHAP 2 & TAHAP 3)
+import mataCircleImg from '../../assets/9. day 1 level B/mata_circle.png'
+import bibirCircleImg from '../../assets/9. day 1 level B/bibir_circle.png'
+import kukuCircleImg from '../../assets/9. day 1 level B/kuku_circle.png'
+import lelahCircleImg from '../../assets/9. day 1 level B/mudah_lelah_circle.png'
+
+// AUDIO SYNTHESIZER UNTUK SOUND EFFECT
 import { playSound } from '../../utils/audio'
 
-// IMPORT ASET TONG SAMPAH FAKTA & MITOS
-import tongFaktaImg from '../../assets/8. day 1 level C/tong fakta.png'
-import tongMitosImg from '../../assets/8. day 1 level C/tong mitos.png'
+const playAudioFeedback = (type) => playSound(type)
 
-// DATA KARTU LEVEL 1: EVALUASI FAKTA VS MITOS TANDA GEJALA
-const CARDS_LEVEL_1 = [
+// 4 DATA GEJALA SISWI DENGAN KOORDINAT PERSENTASE RELATIF TERHADAP KARAKTER
+const SYMPTOMS_DATA = [
   {
-    id: 1,
-    text: 'Cepat Lelah dan Lemah saat Beraktivitas',
-    type: 'fakta',
-    category: 'Tanda Gejala',
-    explanation: 'FAKTA! Sel tubuh kekurangan oksigen karena hemoglobin darah yang rendah sehingga energi cepat habis.'
+    id: 'mata',
+    name: 'Konjungtiva Mata Pucat',
+    fullName: 'Konjungtiva Mata Pucat',
+    icon: '👁️',
+    iconBg: 'bg-blue-100',
+    subtitle: '',
+    modalImg: mataModalImg,
+    circleImg: mataCircleImg,
+    pos: { top: '12%', left: '30%' },
+    causeId: 'act_teh',
+    causeBioFlow: 'Zat Tanin pada Teh ➔ Menghambat Serapan Zat Besi ➔ Kadar Hb Turun ➔ Mata Pucat'
   },
   {
-    id: 2,
-    text: 'Minum jamu pahit pasti langsung sembuh dari anemia',
-    type: 'mitos',
-    category: 'Pengobatan',
-    explanation: 'MITOS! Jamu pahit bukan penambah darah. Tubuh butuh zat besi dari makanan bergizi dan Tablet Tambah Darah (TTD).'
+    id: 'kuku',
+    name: 'Kuku Pucat',
+    fullName: 'Kuku Pucat',
+    icon: '💅',
+    iconBg: 'bg-purple-100',
+    subtitle: '',
+    modalImg: kukuModalImg,
+    circleImg: kukuCircleImg,
+    pos: { top: '67%', left: '78%' },
+    causeId: 'act_diet',
+    causeBioFlow: 'Diet Rendah Zat Besi ➔ Sintesis Hemoglobin Menurun ➔ Perfusi Jaringan Perifer Turun ➔ Kuku Pucat'
   },
   {
-    id: 3,
-    text: 'Wajah, Bibir, dan Kelopak Mata Tampak Pucat',
-    type: 'fakta',
-    category: 'Tanda Gejala',
-    explanation: 'FAKTA! Hemoglobin yang memberi warna merah pada darah berkurang sehingga warna kulit tampak pucat.'
+    id: 'bibir',
+    name: 'Bibir Pucat',
+    fullName: 'Bibir Pucat',
+    icon: '👄',
+    iconBg: 'bg-rose-100',
+    subtitle: '',
+    modalImg: bibirModalImg,
+    circleImg: bibirCircleImg,
+    pos: { top: '24%', left: '34%' },
+    causeId: 'act_ttd',
+    causeBioFlow: 'Kehilangan Darah Haid Tanpa Suplementasi TTD ➔ Cadangan Besi Drop ➔ Mikrosirkulasi Menurun ➔ Bibir Pucat'
   },
   {
-    id: 4,
-    text: 'Makan es batu bisa menyembuhkan anemia',
-    type: 'mitos',
-    category: 'Kebiasaan',
-    explanation: 'MITOS! Keinginan mengunyah es batu (pica) justru tanda kamu kekurangan zat besi, bukan obatnya!'
-  },
-  {
-    id: 5,
-    text: 'Sering Pusing dan Pandangan Berkunang-kunang',
-    type: 'fakta',
-    category: 'Tanda Gejala',
-    explanation: 'FAKTA! Suplai oksigen ke otak berkurang ketika kadar hemoglobin dalam darah rendah.'
-  },
-  {
-    id: 6,
-    text: 'Anemia hanya menyerang orang lanjut usia',
-    type: 'mitos',
-    category: 'Penderita',
-    explanation: 'MITOS! Remaja putri dan usia sekolah sangat rentan anemia karena percepatan pertumbuhan dan menstruasi.'
-  },
-  {
-    id: 7,
-    text: 'Sulit Konsentrasi dan Mudah Mengantuk di Kelas',
-    type: 'fakta',
-    category: 'Tanda Gejala',
-    explanation: 'FAKTA! Kekurangan pasokan oksigen di sel saraf otak membuat konsentrasi dan daya tangkap menurun.'
-  },
-  {
-    id: 8,
-    text: 'Sesak Napas saat Melakukan Olahraga Ringan',
-    type: 'fakta',
-    category: 'Tanda Gejala',
-    explanation: 'FAKTA! Jantung dan paru-paru bekerja lebih keras untuk memompa oksigen yang terbatas ke seluruh tubuh.'
+    id: 'lelah',
+    name: '5L (Lelah, Lesu, dll)',
+    fullName: '5L (lemah, letih, lesu, lelah, & lalai)',
+    icon: '🥱',
+    iconBg: 'bg-amber-100',
+    subtitle: 'Tubuh cepat capek',
+    modalImg: lelahModalImg,
+    circleImg: lelahCircleImg,
+    pos: { top: '40%', left: '72%' },
+    causeId: 'act_begadang',
+    causeBioFlow: 'Begadang Malam ➔ Regenerasi Sel Darah Merah Terganggu + Kelelahan Seluler ➔ Tubuh Cepat Lelah (5L)'
   }
 ]
 
-// DATA PUZZLE LEVEL 2: MEMBANGUN ALUR ANEMIA (PENYEBAB -> TERJADINYA ANEMIA)
-const PUZZLE_PIECES = [
+// OPSI LOG AKTIVITAS (SESUAI GAMBAR 3 & GAMBAR 2)
+const MATCHING_OPTIONS = [
   {
-    id: 'step1',
-    order: 1,
-    title: 'Kurang Asupan Zat Besi',
-    desc: 'Jarang makan protein hewani & sayuran hijau penyuplai zat besi',
-    iconType: 'food',
-    badge: '1. Penyebab Awal'
+    id: 'act_teh',
+    icon: '☕',
+    title: 'Sering minum teh/kopi setelah makan',
+    isCause: true,
+    bioExplanation: 'Zat Tanin pada Teh ➔ Menghambat Serapan Zat Besi ➔ Kadar Hb Turun ➔ Mata Pucat'
   },
   {
-    id: 'step2',
-    order: 2,
-    title: 'Cadangan Besi Tubuh Habis',
-    desc: 'Ferritin & cadangan zat besi di hati dan organ tubuh terkuras',
-    iconType: 'body',
-    badge: '2. Proses Tubuh'
+    id: 'act_vitc',
+    icon: '🍊',
+    title: 'Sering mengonsumsi vitamin C',
+    isCause: false,
+    bioExplanation: 'Buah kaya Vitamin C justru membantu penyerapan zat besi secara optimal di usus, sehingga mencegah anemia!'
   },
   {
-    id: 'step3',
-    order: 3,
-    title: 'Hemoglobin Menurun',
-    desc: 'Tubuh gagal membuat cukup hemoglobin pembawa oksigen',
-    iconType: 'hb',
-    badge: '3. Produksi Darah'
+    id: 'act_diet',
+    icon: '🥩',
+    title: 'Jarang mengonsumsi sumber makanan mengandung zat besi',
+    isCause: true,
+    bioExplanation: 'Diet Rendah Zat Besi ➔ Sintesis Hemoglobin Menurun ➔ Perfusi Jaringan Perifer Turun ➔ Kuku Pucat'
   },
   {
-    id: 'step4',
-    order: 4,
-    title: 'Sel Darah Merah Sedikit',
-    desc: 'Jumlah eritrosit drop dan pasokan oksigen ke seluruh tubuh anjlok',
-    iconType: 'rbc',
-    badge: '4. Dampak Akhir'
+    id: 'act_gula',
+    icon: '🍬',
+    title: 'Sering mengonsumsi makanan tinggi gula',
+    isCause: false,
+    bioExplanation: 'Konsumsi gula berlebih memicu gangguan metabolisme glukosa, namun bukan faktor penyebab langsung defisiensi hemoglobin.'
+  },
+  {
+    id: 'act_natrium',
+    icon: '🧂',
+    title: 'Sering mengonsumsi natrium',
+    isCause: false,
+    bioExplanation: 'Asupan natrium tinggi berkaitan dengan regulasi tekanan darah, bukan penghambat sintesis zat besi sel darah merah.'
+  },
+  {
+    id: 'act_begadang',
+    icon: '🎮',
+    title: 'Sering tidur tengah malam (begadang)',
+    isCause: true,
+    bioExplanation: 'Begadang Malam ➔ Regenerasi Sel Darah Merah Terganggu + Kelelahan Seluler ➔ Tubuh Cepat Lelah (5L)'
+  },
+  {
+    id: 'act_olahraga',
+    icon: '🏃',
+    title: 'Jarang melakukan aktivitas berat',
+    isCause: false,
+    bioExplanation: 'Aktivitas fisik ringan tidak memicu anemia; justru penderita anemia yang merasa cepat lelah saat beraktivitas berat.'
+  },
+  {
+    id: 'act_ttd',
+    icon: '💊',
+    title: 'Tidak minum Tablet Tambah Darah (TTD) saat haid',
+    isCause: true,
+    bioExplanation: 'Kehilangan Darah Haid Tanpa Suplementasi TTD ➔ Cadangan Besi Drop ➔ Mikrosirkulasi Menurun ➔ Bibir Pucat'
   }
 ]
 
 export default function Day1LevelC({ onBack, onComplete, misiId = 'misi_h1_c' }) {
-  // PHASE: 'intro' | 'level1' | 'level1_complete' | 'level2' | 'completed'
-  const [phase, setPhase] = useState('intro')
-  const [gender, setGender] = useState('male')
+  // STAGES: 'identify' -> 'match_causes' -> 'completed'
+  const [stage, setStage] = useState('identify')
+
+  // DATA USER & POIN
   const [totalScore, setTotalScore] = useState(0)
   const [earnedScore, setEarnedScore] = useState(100)
+  const [toastMessage, setToastMessage] = useState('')
   const [alreadyCompleted, setAlreadyCompleted] = useState(false)
   const [existingScore, setExistingScore] = useState(0)
 
-  // STATE LEVEL 1 (FAKTA VS MITOS)
-  const [deck, setDeck] = useState([])
-  const [currentCardIndex, setCurrentCardIndex] = useState(0)
-  const [faktaCount, setFaktaCount] = useState(0)
-  const [mitosCount, setMitosCount] = useState(0)
-  const [feedbackModal, setFeedbackModal] = useState(null)
-  const [dragOverZone, setDragOverZone] = useState(null) // 'fakta' | 'mitos' | null
-  const [level1Mistakes, setLevel1Mistakes] = useState(0)
+  // STATE POPUP & SUBMISI
+  const [showScoreModal, setShowScoreModal] = useState(false)
+  const [isSubmitted, setIsSubmitted] = useState(false)
 
-  // ADRENALIN & GAME-FEEL (COMBO, SHAKE, TIMER, STAMP)
-  const [streakCount, setStreakCount] = useState(0)
-  const [isShaking, setIsShaking] = useState(false)
-  const [activeStamp, setActiveStamp] = useState(null) // { text: string, type: 'fakta' | 'mitos' }
-  const [timeLeft, setTimeLeft] = useState(15)
+  // TAHAP 1: IDENTIFIKASI GEJALA
+  const [discoveredSymptoms, setDiscoveredSymptoms] = useState([])
+  const [activePopupSymptom, setActivePopupSymptom] = useState(null)
 
-  // STATE LEVEL 2 (MEMBANGUN ALUR ANEMIA)
-  const [availablePieces, setAvailablePieces] = useState([])
-  const [slots, setSlots] = useState([null, null, null, null])
-  const [selectedPieceId, setSelectedPieceId] = useState(null)
-  const [level2Validation, setLevel2Validation] = useState(null) // null | 'correct' | 'wrong'
-  const [level2Mistakes, setLevel2Mistakes] = useState(0)
-  const [showLevel2WrongModal, setShowLevel2WrongModal] = useState(false)
+  // TAHAP 2: MEMILIH 4 LOG AKTIVITAS
+  const [selectedActivityIds, setSelectedActivityIds] = useState([])
 
-  const username = localStorage.getItem('anemia_username') || 'Siswa'
   const startTimeRef = useRef(Date.now())
+  const username = localStorage.getItem('anemia_username') || 'Siswa'
 
-  // LOAD USER & RIWAYAT SKOR
   useEffect(() => {
     loadUserData()
-    initLevel1Deck()
-    initLevel2Pieces()
   }, [])
 
-  // HITUNG MUNDUR URGENSI WAKTU LEVEL 1 (15 DETIK DENGAN EFEK DETAK JAM TUT-TUT & TIMEOUT NYATA)
-  useEffect(() => {
-    if (phase !== 'level1' || feedbackModal || currentCardIndex >= deck.length) return
-
-    // Suara detak jam langsung berbunyi dari awal saat kartu terbuka
-    playSound('tick', { isEven: true })
-
-    const timer = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev <= 1) {
-          // WAKTU HABIS (0 DETIK)!
-          const card = deck[currentCardIndex]
-          playSound('wrong')
-          setIsShaking(true)
-          setTimeout(() => setIsShaking(false), 400)
-          setStreakCount(0)
-          setLevel1Mistakes(m => m + 1)
-          setEarnedScore(s => Math.max(50, s - 5))
-          setFeedbackModal({
-            isCorrect: false,
-            card,
-            chosenType: 'timeout',
-            explanation: `⚠️ WAKTU 15 DETIK HABIS! Pernyataan ini sebenarnya adalah ${card?.type?.toUpperCase()}. ${card?.explanation}`
-          })
-          return 15
-        }
-
-        const isEven = prev % 2 === 0
-        // Efek suara detak jam "tik tik tik" jelas setiap detik
-        if (prev <= 5) {
-          playSound('tick', { isEven })
-          playSound('heartbeat')
-        } else {
-          playSound('tick', { isEven })
-        }
-
-        return prev - 1
-      })
-    }, 1000)
-    return () => clearInterval(timer)
-  }, [phase, feedbackModal, currentCardIndex, deck])
+  const showToast = (msg) => {
+    setToastMessage(msg)
+    setTimeout(() => setToastMessage(''), 3000)
+  }
 
   const loadUserData = async () => {
     try {
-      const { data: userData } = await supabase
-        .from('game_users')
-        .select('gender')
-        .eq('username', username)
-        .maybeSingle()
-
-      if (userData && userData.gender) {
-        setGender(userData.gender.toLowerCase())
-      }
-
       const { data: scoreData } = await supabase
         .from('game_scores')
-        .select('kategori_game, skor')
+        .select('skor')
         .eq('username', username)
 
       if (scoreData && scoreData.length > 0) {
         const sum = scoreData.reduce((acc, curr) => acc + (curr.skor || 0), 0)
         setTotalScore(sum)
+      }
 
-        const existing = scoreData.find(item => item.kategori_game === misiId)
-        if (existing) {
-          setAlreadyCompleted(true)
-          setExistingScore(existing.skor || 0)
-        }
+      const { data: existing } = await supabase
+        .from('game_scores')
+        .select('skor')
+        .eq('username', username)
+        .eq('kategori_game', misiId)
+        .maybeSingle()
+
+      if (existing) {
+        setAlreadyCompleted(true)
+        setExistingScore(existing.skor || 0)
       }
     } catch (err) {
-      console.error('Gagal memuat profil:', err.message)
+      console.error('Error loading user data:', err.message)
     }
   }
 
-  // INISIALISASI KARTU LEVEL 1 (ACAK DENGAN TIMER 15 DETIK)
-  const initLevel1Deck = () => {
-    const shuffled = [...CARDS_LEVEL_1].sort(() => Math.random() - 0.5)
-    setDeck(shuffled)
-    setCurrentCardIndex(0)
-    setFaktaCount(0)
-    setMitosCount(0)
-    setStreakCount(0)
-    setTimeLeft(15)
-  }
-
-  // INISIALISASI PUZZLE LEVEL 2 (ACAK)
-  const initLevel2Pieces = () => {
-    const shuffled = [...PUZZLE_PIECES].sort(() => Math.random() - 0.5)
-    setAvailablePieces(shuffled)
-    setSlots([null, null, null, null])
-    setSelectedPieceId(null)
-    setLevel2Validation(null)
-    setShowLevel2WrongModal(false)
-  }
-
-  // SIMPAN SKOR KE DATABASE SUPABASE
-  const saveScoreToDatabase = async (finalScore) => {
+  const saveScoreToSupabase = async (finalScore = earnedScore) => {
     try {
+      localStorage.setItem('misi_h1_c_completed', 'true')
+      localStorage.setItem('misi_h1_c_score', finalScore.toString())
       const durationSeconds = Math.max(1, Math.round((Date.now() - startTimeRef.current) / 1000))
       await supabase.from('game_scores').insert([
         {
@@ -265,412 +222,672 @@ export default function Day1LevelC({ onBack, onComplete, misiId = 'misi_h1_c' })
       setAlreadyCompleted(true)
       setExistingScore(finalScore)
     } catch (err) {
-      console.error('Gagal menyimpan skor ke Supabase:', err.message)
+      console.error('Gagal menyimpan skor:', err.message)
     }
   }
 
-  // --------------------------------------------------------------------------
-  // LOGIKA LEVEL 1: EVALUASI FAKTA VS MITOS (DENGAN COMBO STREAK & STEMPEL)
-  // --------------------------------------------------------------------------
-  const handleSortCard = (chosenType) => {
-    if (currentCardIndex >= deck.length || activeStamp) return
-    const card = deck[currentCardIndex]
-    const isCorrect = card.type === chosenType
-
-    if (isCorrect) {
-      const nextStreak = streakCount + 1
-      setStreakCount(nextStreak)
-
-      if (nextStreak >= 2) {
-        playSound('combo', { streak: nextStreak })
-      } else {
-        playSound('correct')
-      }
-
-      // Tampilkan Efek Stempel Visual
-      setActiveStamp({
-        text: chosenType === 'fakta' ? 'FAKTA MEDIS!' : 'MITOS TERBONGKAR!',
-        type: chosenType
-      })
-      playSound('stamp')
-
-      if (chosenType === 'fakta') setFaktaCount(prev => prev + 1)
-      else setMitosCount(prev => prev + 1)
-
-      setTimeLeft(15)
-
-      setTimeout(() => {
-        setActiveStamp(null)
-        // Cek apakah ini kartu terakhir
-        if (currentCardIndex + 1 >= deck.length) {
-          playSound('cring')
-          setPhase('level1_complete')
-        } else {
-          setCurrentCardIndex(prev => prev + 1)
-        }
-      }, 450)
+  // KLIK TITIK PADA KARAKTER (TAHAP 1)
+  const handleSpotClick = (symptom) => {
+    if (!discoveredSymptoms.includes(symptom.id)) {
+      playAudioFeedback('correct')
+      setDiscoveredSymptoms(prev => [...prev, symptom.id])
     } else {
-      playSound('wrong')
-      setStreakCount(0)
-      setIsShaking(true)
-      setTimeout(() => setIsShaking(false), 400)
-      setLevel1Mistakes(prev => prev + 1)
-      setEarnedScore(prev => Math.max(50, prev - 5))
-      setFeedbackModal({
-        isCorrect: false,
-        card,
-        chosenType,
-        explanation: card.explanation
-      })
+      playAudioFeedback('click')
     }
+    setActivePopupSymptom(symptom)
   }
 
-  const dismissFeedbackModal = () => {
-    const isTimeout = feedbackModal?.chosenType === 'timeout'
-    setFeedbackModal(null)
-    setTimeLeft(15)
-    if (isTimeout) {
-      if (currentCardIndex + 1 >= deck.length) {
-        playSound('cring')
-        setPhase('level1_complete')
-      } else {
-        setCurrentCardIndex(prev => prev + 1)
-      }
-    }
-  }
-
-  // DRAG & DROP HANDLERS (DESKTOP & TOUCH FRIENDLY)
-  const handleDragStart = (e) => {
-    e.dataTransfer.setData('text/plain', deck[currentCardIndex]?.id)
-  }
-
-  const handleDragOver = (e, zone) => {
-    e.preventDefault()
-    setDragOverZone(zone)
-  }
-
-  const handleDragLeave = () => {
-    setDragOverZone(null)
-  }
-
-  const handleDrop = (e, zone) => {
-    e.preventDefault()
-    setDragOverZone(null)
-    handleSortCard(zone)
-  }
-
-  // --------------------------------------------------------------------------
-  // LOGIKA LEVEL 2: MEMBANGUN ALUR ANEMIA
-  // --------------------------------------------------------------------------
-  const handleSelectPiece = (pieceId) => {
-    playSound('click')
-    // Jika piece sudah terpilih, batalkan pilihan
-    if (selectedPieceId === pieceId) {
-      setSelectedPieceId(null)
+  // LANJUT DARI TAHAP 1 KE TAHAP 2
+  const handleGoToMatchCauses = () => {
+    if (discoveredSymptoms.length < 4) {
+      playAudioFeedback('wrong')
+      showToast('Temukan semua 4 gejala pada tubuh siswi terlebih dahulu!')
       return
     }
+    playAudioFeedback('cring')
+    setStage('match_causes')
+  }
 
-    // Jika ada slot kosong pertama, langsung masukkan piece ke slot tersebut
-    const firstEmptyIndex = slots.findIndex(s => s === null)
-    if (firstEmptyIndex !== -1) {
-      const piece = availablePieces.find(p => p.id === pieceId)
-      if (piece) {
-        playSound('place')
-        const newSlots = [...slots]
-        newSlots[firstEmptyIndex] = piece
-        setSlots(newSlots)
-        setAvailablePieces(prev => prev.filter(p => p.id !== pieceId))
-        setSelectedPieceId(null)
-        setLevel2Validation(null)
+  // KLIK OPSI KARTU LOG AKTIVITAS (TAHAP 2)
+  const handleToggleActivityOption = (optionId) => {
+    if (isSubmitted) return
+    playAudioFeedback('click')
+
+    if (selectedActivityIds.includes(optionId)) {
+      setSelectedActivityIds(prev => prev.filter(id => id !== optionId))
+    } else {
+      if (selectedActivityIds.length >= 4) {
+        playAudioFeedback('wrong')
+        showToast('Kamu hanya dapat memilih maksimal 4 aktivitas penyebab!')
         return
       }
-    }
-
-    setSelectedPieceId(pieceId)
-  }
-
-  const handleSlotClick = (index) => {
-    // Jika slot terisi, kembalikan kepingan ke baki
-    if (slots[index]) {
-      playSound('click')
-      const pieceToReturn = slots[index]
-      setAvailablePieces(prev => [...prev, pieceToReturn])
-      const newSlots = [...slots]
-      newSlots[index] = null
-      setSlots(newSlots)
-      setLevel2Validation(null)
-      return
-    }
-
-    // Jika ada kepingan yang sedang terpilih, masukkan ke slot kosong ini
-    if (selectedPieceId) {
-      const piece = availablePieces.find(p => p.id === selectedPieceId)
-      if (piece) {
-        playSound('place')
-        const newSlots = [...slots]
-        newSlots[index] = piece
-        setSlots(newSlots)
-        setAvailablePieces(prev => prev.filter(p => p.id !== selectedPieceId))
-        setSelectedPieceId(null)
-        setLevel2Validation(null)
-      }
+      setSelectedActivityIds(prev => [...prev, optionId])
     }
   }
 
-  const handleCheckSequence = () => {
-    // Cek apakah semua 4 slot sudah terisi
-    if (slots.some(s => s === null)) {
-      playSound('wrong')
-      alert('Lengkapi seluruh 4 puzzle alur terlebih dahulu sebelum memeriksa!')
+  // SUBMIT HASIL EVALUASI (TAHAP 2)
+  const handleSubmitFinalAnalysis = () => {
+    if (selectedActivityIds.length < 4) {
+      playAudioFeedback('wrong')
+      showToast(`Pilih 4 aktivitas penyebab! (Saat ini: ${selectedActivityIds.length}/4)`)
       return
     }
 
-    const isOrderCorrect =
-      slots[0]?.order === 1 &&
-      slots[1]?.order === 2 &&
-      slots[2]?.order === 3 &&
-      slots[3]?.order === 4
+    let correctCount = 0
+    selectedActivityIds.forEach(id => {
+      const opt = MATCHING_OPTIONS.find(o => o.id === id)
+      if (opt && opt.isCause) correctCount++
+    })
 
-    if (isOrderCorrect) {
-      playSound('cring')
-      setLevel2Validation('correct')
-      setActiveStamp({
-        text: 'ALUR PATOFISIOLOGI TEPAT!',
-        type: 'fakta'
-      })
-      playSound('stamp')
-      setTimeout(() => {
-        setActiveStamp(null)
-        saveScoreToDatabase(earnedScore)
-        setPhase('completed')
-      }, 1500)
+    const finalPoints = Math.round((correctCount / 4) * 100)
+    setEarnedScore(finalPoints)
+    setIsSubmitted(true)
+
+    if (finalPoints >= 75) {
+      playAudioFeedback('cring')
     } else {
-      playSound('wrong')
-      setIsShaking(true)
-      setTimeout(() => setIsShaking(false), 400)
-      setLevel2Validation('wrong')
-      setLevel2Mistakes(prev => prev + 1)
-      setEarnedScore(prev => Math.max(50, prev - 10))
-      setShowLevel2WrongModal(true)
+      playAudioFeedback('wrong')
     }
+
+    saveScoreToSupabase(finalPoints)
+    // Tampilkan buku catatan review terlebih dahulu (tidak langsung menutup layar dengan modal)
+    setShowScoreModal(false)
   }
 
-  const handleResetSlots = () => {
-    playSound('click')
-    initLevel2Pieces()
-  }
-
-  // --------------------------------------------------------------------------
-  // ICON HELPER UNTUK PUZZLE PIECE
-  // --------------------------------------------------------------------------
-  const renderPuzzleIcon = (type) => {
-    switch (type) {
-      case 'food':
-        return (
-          <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-amber-100 flex items-center justify-center p-0.5 shadow-inner border border-amber-300">
-            <img src={imgSumberMakanan} alt="Makanan Zat Besi" className="w-full h-full object-contain" />
-          </div>
-        )
-      case 'body':
-        return (
-          <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-rose-100 flex items-center justify-center p-0.5 shadow-inner border border-rose-300">
-            <img src={imgPenyebab} alt="Proses Tubuh" className="w-full h-full object-contain" />
-          </div>
-        )
-      case 'hb':
-        return (
-          <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-red-100 flex items-center justify-center p-0.5 shadow-inner border border-red-300">
-            <img src={imgDarahO2} alt="Hemoglobin" className="w-full h-full object-contain" />
-          </div>
-        )
-      case 'rbc':
-        return (
-          <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-emerald-100 flex items-center justify-center p-0.5 shadow-inner border border-emerald-300">
-            <svg viewBox="0 0 48 48" className="w-5 h-5 sm:w-6 sm:h-6 drop-shadow fill-red-500" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="24" cy="24" r="18" fill="#E63946" />
-              <ellipse cx="24" cy="24" rx="10" ry="7" fill="#C1121F" opacity="0.65" />
-              <circle cx="16" cy="18" r="4" fill="#FFFFFF" opacity="0.3" />
-            </svg>
-          </div>
-        )
-      default:
-        return null
-    }
-  }
-
-  // --------------------------------------------------------------------------
-  // RENDER UTAMA
-  // --------------------------------------------------------------------------
   return (
-    <div className="relative w-dvw h-dvh bg-gradient-to-b from-[#08332B] via-[#0E473D] to-[#05231D] overflow-hidden font-sans select-none flex flex-col justify-between">
-      {/* DEKORASI AMBIENT GLOW LATAR SEGAR (BEBAS WARNA MERAH) */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(16,185,129,0.12),transparent_70%)] pointer-events-none" />
+    <div className="relative w-dvw h-dvh overflow-hidden select-none font-sans bg-[#1B122C]">
+      
+      {/* BACKGROUND PAPAN UNGU */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat pointer-events-none"
+        style={{ backgroundImage: `url("${bgTexture}")` }}
+      />
 
-      {/* =========================================================================
-          TOP BAR NAVIGASI & PROFIL
-         ========================================================================= */}
-      <div className="relative z-30 flex items-center justify-between w-full px-3 py-1 sm:px-4 sm:py-1 bg-[#0B4F48]/95 backdrop-blur-md border-b-2 border-emerald-400/30 shadow-md flex-shrink-0">
-        {/* TOMBOL KEMBALI (HANYA MUNCUL DI MENU AWAL, HILANG SAAT SEDANG MEMAINKAN GAME) */}
-        {phase === 'intro' ? (
+      {/* FRAME KONTEN FIT SCREEN LANDSCAPE */}
+      <div className="relative w-full h-full flex flex-col justify-between overflow-hidden">
+        
+        {/* HEADER TOP BAR DENGAN TITLE LEVEL C */}
+        <div className="relative z-30 flex items-center justify-between w-full px-3 py-1 bg-[#1E1236]/90 backdrop-blur-md border-b-2 border-purple-400/30 shadow-md">
           <button
             onClick={() => {
-              playSound('click')
+              playAudioFeedback('click')
               onBack && onBack()
             }}
-            className="flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 text-white font-bold text-xs border border-white/20 transition-all cursor-pointer shadow-sm"
+            className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 text-white font-bold text-xs border border-white/20 cursor-pointer shadow-sm"
           >
-            <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
             <span>Keluar</span>
           </button>
-        ) : (
-          <div className="w-6 sm:w-8" />
-        )}
 
-        {/* TITLE */}
-        <div className="text-left">
-          <h1 className="text-white font-black text-xs sm:text-sm md:text-base leading-tight tracking-wide drop-shadow-md">
-            MISI SEHAT: MELAWAN ANEMIA
-          </h1>
-        </div>
+          <div className="text-center">
+            <h1 className="text-white font-black text-xs sm:text-sm md:text-base leading-tight tracking-wide drop-shadow flex items-center gap-1.5 justify-center">
+              <span>🕵️‍♀️</span> GAME 3: MISI DETEKTIF TANDA &amp; GEJALA ANEMIA (LEVEL C)
+            </h1>
+            <p className="text-purple-200 text-[9px] sm:text-[10px] font-semibold">
+              Identifikasi 4 Tanda Gejala Klinis &amp; Hubungkan Aktivitas Pemicunya
+            </p>
+          </div>
 
-        {/* PROFIL SISWA & SKOR (PRESISI DI DALAM WHITE PILL ASSET CROPPED) */}
-        <div className="relative h-8 sm:h-9 md:h-10 flex items-center">
-          <img
-            src={gender === 'female' ? bgProfilWanita : bgProfilPria}
-            alt="Profile Pill"
-            className="h-full w-auto object-contain pointer-events-none drop-shadow-md"
-          />
-          <div className="absolute left-[28%] right-[4%] inset-y-0 flex items-center justify-center gap-1.5 sm:gap-2 px-1.5 pointer-events-none">
-            <span className="text-[#8B0000] font-black text-xs sm:text-sm truncate max-w-[80px] sm:max-w-[105px] uppercase drop-shadow-xs">
-              {username}
-            </span>
-            <span className="text-[#003049] font-black text-xs sm:text-sm opacity-40">|</span>
-            <span className="text-[#003049] font-extrabold text-xs sm:text-sm whitespace-nowrap">
-              {totalScore} PTS
-            </span>
+          <div className="bg-amber-400 text-slate-950 font-black text-xs px-3 py-1 rounded-full border border-white shadow">
+            Skor: {totalScore} PTS
           </div>
         </div>
-      </div>
 
-      {/* =========================================================================
-          KONTEN BERDASARKAN FASE (BEBAS SCROLL, PAS 1 LAYAR PENUH)
-         ========================================================================= */}
-      <div className="relative z-20 flex-1 flex flex-col items-center justify-center p-0.5 sm:p-1 overflow-y-auto custom-scrollbar">
+        {/* TOAST MESSAGE */}
+        {toastMessage && (
+          <div className="absolute top-14 left-1/2 -translate-x-1/2 z-50 bg-amber-500 text-slate-950 font-black text-xs px-4 py-2 rounded-full shadow-2xl border-2 border-white animate-bounce">
+            {toastMessage}
+          </div>
+        )}
 
-        {/* -----------------------------------------------------------------------
-            FASE 0: MAIN MENU & CONCEPT (RESPONSIF LANDSCAPE HP TANPA TERPOTONG)
-           ----------------------------------------------------------------------- */}
-        {phase === 'intro' && (
-          <div className="w-full max-w-2xl sm:max-w-3xl bg-white/95 backdrop-blur-md rounded-2xl sm:rounded-3xl p-2.5 sm:p-4 shadow-2xl border-3 border-emerald-600/40 flex flex-col items-center animate-fadeIn max-h-[92dvh] overflow-y-auto custom-scrollbar my-auto justify-between">
-            <div className="grid grid-cols-12 gap-2 sm:gap-4 items-center w-full my-auto">
-              {/* MASCOT SISWI / DETEKTIF SEHAT */}
-              <div className="col-span-4 flex flex-col items-center justify-center">
-                <div className="relative w-14 h-14 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full bg-gradient-to-tr from-emerald-600 via-teal-500 to-cyan-400 p-1 shadow-lg flex items-center justify-center">
-                  <div className="w-full h-full rounded-full bg-[#E8F5E9] overflow-hidden flex items-end justify-center">
-                    <img
-                      src={mascotSiswi}
-                      alt="Mascot Siswi"
-                      className="w-full h-full object-contain scale-110 translate-y-1 pointer-events-none"
-                    />
+        {/* =========================================================================
+            PROTEKSI 1X PERCOBAAN
+           ========================================================================= */}
+        {alreadyCompleted && !isSubmitted && stage !== 'completed' && (
+          <div className="absolute inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full text-center shadow-2xl border-4 border-amber-400 flex flex-col items-center">
+              <div className="w-14 h-14 bg-emerald-100 rounded-full flex items-center justify-center mb-3 text-2xl shadow-inner text-emerald-600 font-bold">
+                ✔
+              </div>
+              <h2 className="text-[#003049] font-black text-lg sm:text-xl mb-1">MISI LEVEL C TELAH SELESAI</h2>
+              <p className="text-slate-600 text-xs mb-3">
+                Kamu sudah menyelesaikan Misi Detektif Gejala sebelumnya dengan perolehan:
+              </p>
+              <div className="bg-emerald-50 border-2 border-emerald-200 rounded-xl py-2 px-6 mb-4 w-full">
+                <span className="text-emerald-800 font-black text-2xl">{existingScore} PTS</span>
+              </div>
+              <p className="text-slate-500 text-[11px] mb-4">Setiap misi hanya dapat diakses 1 kali percobaan.</p>
+              <button
+                onClick={onBack}
+                className="w-full bg-[#003049] hover:bg-[#002233] text-white font-bold py-2.5 px-4 rounded-full shadow text-xs uppercase tracking-wider cursor-pointer active:scale-95 transition-all"
+              >
+                Kembali ke Menu Misi
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* =========================================================================
+            TAHAP 1: IDENTIFIKASI 4 GEJALA ANEMIA
+           ========================================================================= */}
+        {stage === 'identify' && (
+          <div className="relative w-full h-full flex-1">
+            
+            {/* 1. BANNER MISI ATAS */}
+            <div className="absolute top-[2%] left-1/2 -translate-x-1/2 w-[88%] max-w-[1280px] pointer-events-none flex justify-center">
+              <img
+                src={bannerMisiCrop}
+                alt="Misi Detektif: Identifikasilah 4 tanda & gejala anemia!"
+                className="w-full h-auto max-h-[15vh] object-contain drop-shadow-md"
+              />
+            </div>
+
+            {/* 2. PAPAN CLIPBOARD KIRI */}
+            <div className="absolute left-[6%] top-[25%] w-[30%] max-w-[340px] h-[65%] flex items-center justify-center">
+              <div className="relative w-full h-full flex items-center justify-center">
+                <img
+                  src={berhasilTercatatCrop}
+                  alt="Berhasil Tercatat"
+                  className="w-full h-full object-contain drop-shadow-[0_8px_20px_rgba(0,0,0,0.35)]"
+                />
+                <div className="absolute top-[16%] left-[28%] w-[44%] h-[9.5%] flex items-center justify-center pointer-events-none">
+                  <span className="text-white font-black text-xs sm:text-sm md:text-base tracking-wider leading-none drop-shadow-sm">
+                    {discoveredSymptoms.length}/4
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* 3. KARAKTER SISWI DENGAN 4 TITIK SENTUH */}
+            <div className="absolute left-[38%] top-[22%] h-[74%] aspect-[404/1027]">
+              <img
+                src={karakterSiswiCrop}
+                alt="Siswi Mengalami Anemia"
+                className="w-full h-full object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.65)] pointer-events-none animate-heartbeat"
+              />
+
+              {SYMPTOMS_DATA.map((symptom) => {
+                const isFound = discoveredSymptoms.includes(symptom.id)
+                return (
+                  <button
+                    key={symptom.id}
+                    onClick={() => handleSpotClick(symptom)}
+                    style={{ top: symptom.pos.top, left: symptom.pos.left }}
+                    className="absolute -translate-x-1/2 -translate-y-1/2 w-[24%] aspect-square cursor-pointer transition-transform duration-150 hover:scale-115 active:scale-95 focus:outline-none"
+                    title={symptom.name}
+                  >
+                    <div className="relative w-full h-full">
+                      <img
+                        src={tombolKlikImg}
+                        alt={`Periksa ${symptom.name}`}
+                        className={`w-full h-full object-contain drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)] ${
+                          !isFound ? 'animate-pulse' : ''
+                        }`}
+                      />
+                      {isFound && (
+                        <div className="absolute -top-1 -right-1 bg-emerald-500 text-white rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center text-[10px] sm:text-xs font-black border-2 border-white shadow-md">
+                          ✓
+                        </div>
+                      )}
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* 4. POPUP KANAN SAAT TITIK DIKLIK */}
+            {activePopupSymptom && (
+              <div className="absolute right-[4%] top-[22%] w-[31%] max-w-[340px] aspect-[1446/964] z-30 animate-in zoom-in-95 duration-150">
+                <div className="relative w-full h-full">
+                  <div className="absolute top-[4%] left-[5%] z-40 bg-emerald-600 text-white font-black text-[9px] sm:text-[11px] px-2 py-0.5 rounded-lg border border-emerald-300 shadow-md animate-stamp">
+                    ✓ TERDETEKSI!
                   </div>
-                  {/* Magnifying Glass Badge */}
-                  <div className="absolute -bottom-1 -right-1 w-5 h-5 sm:w-6 sm:h-6 bg-amber-400 rounded-full border-2 border-white shadow-md flex items-center justify-center text-[10px] sm:text-xs">
-                    🔍
+                  <img
+                    src={activePopupSymptom.modalImg}
+                    alt={activePopupSymptom.name}
+                    className="w-full h-full object-contain drop-shadow-[0_14px_35px_rgba(0,0,0,0.55)] cursor-pointer"
+                    onClick={() => setActivePopupSymptom(null)}
+                    title="Klik untuk menutup popup"
+                  />
+                  <button
+                    onClick={() => setActivePopupSymptom(null)}
+                    className="absolute top-[4%] right-[4%] w-[12%] h-[18%] cursor-pointer hover:bg-black/10 rounded-full"
+                    title="Tutup Popup"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* 5. TOMBOL SELANJUTNYA */}
+            {discoveredSymptoms.length === 4 && (
+              <div className="absolute right-[6%] bottom-[5%] z-40 animate-bounce">
+                <button
+                  onClick={handleGoToMatchCauses}
+                  className="cursor-pointer transition-transform hover:scale-105 active:scale-95 focus:outline-none"
+                >
+                  <img
+                    src={selanjutnyaCrop}
+                    alt="Selanjutnya"
+                    className="w-36 sm:w-44 md:w-52 h-auto object-contain drop-shadow-[0_8px_20px_rgba(0,0,0,0.5)]"
+                  />
+                </button>
+              </div>
+            )}
+
+          </div>
+        )}
+
+        {/* =========================================================================
+            TAHAP 2: BUKU CATATAN DETEKTIF (ANALISIS LOG PENYEBAB ANEMIA)
+            - JIKA BELUM SUBMIT: TAMPILAN SESUAI GAMBAR 3 (DESIGN UTAMA)
+            - JIKA SUDAH SUBMIT: TAMPILAN SESUAI GAMBAR 2 (REVIU HASIL INVESTIGASI)
+           ========================================================================= */}
+        {stage === 'match_causes' && (
+          <div className="relative w-full flex-1 flex items-center justify-center p-2 sm:p-3 overflow-hidden min-h-0">
+            
+            {/* CONTAINER PAPAN CLIPBOARD */}
+            <div className={`relative w-[98%] max-w-[1100px] h-[94%] max-h-[580px] rounded-3xl border-[5px] sm:border-[6px] shadow-[0_20px_50px_rgba(0,0,0,0.6)] p-3 sm:p-4 flex flex-col justify-between overflow-hidden transition-all duration-300 ${
+              isSubmitted 
+                ? 'bg-white border-[#3B82F6]' 
+                : 'bg-[#FFF5F5] border-[#5E50A1]'
+            }`}>
+              
+              {/* CLIP KAYU ATAS DI TENGAH */}
+              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 w-28 sm:w-36 h-5 sm:h-6 bg-gradient-to-b from-[#F59E0B] via-[#D97706] to-[#B45309] rounded-t-xl border-2 border-[#92400E] shadow-md flex items-center justify-center z-20">
+                <div className="w-3.5 h-3.5 rounded-full border-2 border-white/80 bg-white/40 shadow-inner" />
+              </div>
+
+              {/* -------------------------------------------------------------------
+                  MODE 1: SEBELUM SUBMIT (PERSIS GAMBAR 3 - DESIGN UTAMA)
+                 ------------------------------------------------------------------- */}
+              {!isSubmitted ? (
+                <div className="w-full h-full flex flex-col justify-between pt-1">
+                  
+                  {/* GRID DUA KOLOM */}
+                  <div className="grid grid-cols-12 gap-2 sm:gap-4 flex-1 min-h-0 items-stretch">
+                    
+                    {/* KOLOM KIRI (HASIL ANALISIS GEJALA - 4 KARTU VERTIKAL) */}
+                    <div className="col-span-4 flex flex-col justify-between h-full min-h-0">
+                      <div className="text-center mb-1 shrink-0">
+                        <h3 className="text-[#2B6CB0] font-black text-[11px] sm:text-xs md:text-sm tracking-wider uppercase leading-tight">
+                          HASIL ANALISIS
+                        </h3>
+                        <h3 className="text-[#2B6CB0] font-black text-[11px] sm:text-xs md:text-sm tracking-wider uppercase leading-tight">
+                          GEJALA
+                        </h3>
+                      </div>
+
+                      <div className="flex flex-col justify-between gap-1 sm:gap-1.5 flex-1 min-h-0">
+                        {SYMPTOMS_DATA.map((symptom) => (
+                          <div
+                            key={symptom.id}
+                            className="w-full bg-white border-2 border-[#FFCCD5] rounded-xl sm:rounded-2xl px-2 sm:px-2.5 py-1 flex items-center gap-2 sm:gap-2.5 shadow-xs flex-1 min-h-0 overflow-hidden"
+                          >
+                            <div className="w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 rounded-full overflow-hidden border border-slate-200 shadow-xs flex items-center justify-center bg-white shrink-0">
+                              <img src={symptom.circleImg} className="w-full h-full object-cover" alt={symptom.name} />
+                            </div>
+                            <div className="flex-1 min-w-0 text-left">
+                              <span className="text-[#2B6CB0] font-black text-[9px] sm:text-[10px] md:text-[11px] leading-tight block truncate">
+                                {symptom.fullName || symptom.name}
+                              </span>
+                              {symptom.subtitle && (
+                                <span className="text-slate-400 font-medium text-[7.5px] sm:text-[8px] leading-none block truncate mt-0.5">
+                                  {symptom.subtitle}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* KOLOM KANAN (LOG AKTIVITAS - DAFTAR KAPSUL CHECKBOX) */}
+                    <div className="col-span-8 flex flex-col justify-between h-full min-h-0 pl-1 sm:pl-2">
+                      <div className="text-center mb-1 shrink-0">
+                        <h3 className="text-[#2B6CB0] font-black text-xs sm:text-sm md:text-base tracking-wider uppercase leading-tight">
+                          LOG AKTIVITAS
+                        </h3>
+                        <p className="text-[#2B6CB0] font-extrabold text-[8px] sm:text-[9.5px] md:text-[10.5px] uppercase tracking-wide leading-tight mt-0.5 max-w-lg mx-auto">
+                          CENTANG AKTIVITAS YANG BERKAITAN MENJADI PENYEBAB ANEMIA SEHINGGA MENIMBULKAN GEJALA DISAMPING
+                        </p>
+                      </div>
+
+                      {/* DAFTAR PILIHAN KAPSUL DENGAN CHECKBOX DI KIRI (BERSIH DARI MARGIN COLLAPSE) */}
+                      <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-1.5 sm:gap-2 pr-1 min-h-0 py-1.5">
+                        {MATCHING_OPTIONS.map((option) => {
+                          const isChecked = selectedActivityIds.includes(option.id)
+                          return (
+                            <div
+                              key={option.id}
+                              onClick={() => handleToggleActivityOption(option.id)}
+                              className={`rounded-full border-2 px-3 sm:px-4 py-1.5 sm:py-2 flex items-center gap-2.5 sm:gap-3 transition-all cursor-pointer shadow-xs select-none ${
+                                isChecked
+                                  ? 'border-[#2B6CB0] bg-blue-50/90 shadow-sm'
+                                  : 'border-[#FFCCD5] bg-white hover:border-[#2B6CB0]/60'
+                              }`}
+                            >
+                              {/* CHECKBOX KOTAK DI KIRI PERSIS GAMBAR 3 */}
+                              <div
+                                className={`w-4 h-4 sm:w-5 sm:h-5 rounded border-2 flex items-center justify-center shrink-0 transition-all ${
+                                  isChecked
+                                    ? 'border-slate-800 bg-white text-slate-900 font-black'
+                                    : 'border-slate-400 bg-white'
+                                }`}
+                              >
+                                {isChecked && (
+                                  <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 stroke-[4]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                  </svg>
+                                )}
+                              </div>
+
+                              {/* TEKS AKTIVITAS */}
+                              <span className="text-slate-800 font-bold text-[10px] sm:text-[11px] md:text-xs leading-snug flex-1 text-center">
+                                {option.title}
+                              </span>
+                            </div>
+                          )
+                        })}
+                      </div>
+
+                      {/* FOOTER SUBMIT ANALISIS */}
+                      <div className="pt-2 flex items-center justify-between shrink-0 border-t border-rose-200/60 mt-1">
+                        <span className="text-[10px] sm:text-xs font-black text-purple-900 bg-purple-100 px-3 py-1 rounded-full border border-purple-200 shadow-2xs">
+                          Terpilih: {selectedActivityIds.length} / 4
+                        </span>
+                        
+                        <button
+                          onClick={handleSubmitFinalAnalysis}
+                          className="bg-[#4338CA] hover:bg-[#3730A3] active:scale-95 text-white font-extrabold text-[11px] sm:text-xs px-8 sm:px-12 py-2 rounded-full shadow-lg transition-all cursor-pointer uppercase tracking-wider flex items-center justify-center gap-2"
+                        >
+                          <span>🚀</span>
+                          <span>SUBMIT ANALISIS DETEKTIF</span>
+                        </button>
+                      </div>
+
+                    </div>
+
                   </div>
                 </div>
-                <span className="mt-1 text-slate-800 font-black text-[10px] sm:text-xs tracking-wide uppercase text-center leading-tight">
-                  {username} <br className="sm:hidden" />(Detektif Anemia)
+              ) : (
+                /* -------------------------------------------------------------------
+                    MODE 2: SETELAH SUBMIT (PERSIS GAMBAR 2 - REVIU HASIL INVESTIGASI)
+                   ------------------------------------------------------------------- */
+                <div className="w-full h-full flex flex-col justify-between pt-0.5">
+                  
+                  {/* HEADER REVIU PERSIS GAMBAR 2 */}
+                  <div className="flex items-center justify-between border-b pb-1.5 border-slate-200 shrink-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-base sm:text-lg">📋</span>
+                      <h2 className="text-[#1E293B] font-black text-xs sm:text-sm uppercase tracking-wide">
+                        BUKU CATATAN DETEKTIF: REVIU HASIL INVESTIGASI
+                      </h2>
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <div className="bg-[#FEF3C7] text-[#92400E] font-extrabold text-[9.5px] sm:text-[11px] px-3 py-1 rounded-full border border-amber-300 shadow-2xs">
+                        Skor: {earnedScore} PTS
+                      </div>
+                      <div className="bg-[#E0E7FF] text-[#4338CA] font-extrabold text-[9.5px] sm:text-[11px] px-3 py-1 rounded-full border border-indigo-200 shadow-2xs">
+                        Progress: {selectedActivityIds.length} / 4 Terpilih
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* GRID DUA KOLOM REVIU PERSIS GAMBAR 2 */}
+                  <div className="grid grid-cols-12 gap-2 sm:gap-3 flex-1 min-h-0 my-1 items-stretch">
+                    
+                    {/* KOLOM KIRI: 4 GEJALA HASIL ANALISIS */}
+                    <div className="col-span-5 flex flex-col justify-between gap-1 h-full min-h-0">
+                      <span className="text-slate-500 font-bold text-[8.5px] sm:text-[9.5px] uppercase tracking-wider mb-0.5 shrink-0">
+                        HASIL ANALISIS GEJALA:
+                      </span>
+
+                      {SYMPTOMS_DATA.map((symptom) => (
+                        <div
+                          key={symptom.id}
+                          className="w-full px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-2xl border-2 border-slate-200 bg-white text-left flex items-center gap-2 flex-1 min-h-0 shadow-2xs overflow-hidden"
+                        >
+                          <div className="w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 rounded-full border border-slate-200 shrink-0 shadow-2xs flex items-center justify-center overflow-hidden bg-white">
+                            <img src={symptom.circleImg} className="w-full h-full object-cover" alt={symptom.name} />
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                            <div className="text-[#1E3A8A] font-extrabold text-[9.5px] sm:text-[11px] truncate leading-tight">
+                              {symptom.name}
+                            </div>
+                            
+                            {symptom.subtitle && (
+                              <div className="text-slate-400 font-medium text-[7.5px] sm:text-[8px] leading-none mt-0.5">
+                                {symptom.subtitle}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* KOLOM KANAN: EVALUASI LOG AKTIVITAS (SEMUA OPSI) DENGAN KOTAK HIJAU/MERAH/KUNING */}
+                    <div className="col-span-7 flex flex-col gap-1 h-full min-h-0 pl-1 sm:pl-2 border-l-2 border-dashed border-slate-200">
+                      <span className="text-slate-500 font-bold text-[8.5px] sm:text-[9.5px] uppercase tracking-wider mb-0.5 shrink-0">
+                        EVALUASI LOG AKTIVITAS (SEMUA OPSI):
+                      </span>
+
+                      <div className="flex-1 overflow-y-auto pr-1 pb-1 flex flex-col gap-1.5 sm:gap-2 custom-scrollbar">
+                        {MATCHING_OPTIONS.map((option) => {
+                          const isChecked = selectedActivityIds.includes(option.id)
+                          const isCause = option.isCause
+
+                          let cardStyle = ''
+                          let iconBg = ''
+                          let iconSymbol = ''
+                          let badgeTag = null
+                          let boxStyle = ''
+                          let boxTitleStyle = ''
+                          let boxTextStyle = ''
+                          let boxLabel = ''
+
+                          if (isChecked && isCause) {
+                            // 1. BENAR (Dipilih & Memang Penyebab) - PERSIS KOTAK HIJAU GAMBAR 2
+                            cardStyle = 'bg-emerald-50/60 border-2 border-emerald-500'
+                            iconBg = 'bg-emerald-600 text-white'
+                            iconSymbol = '✓'
+                            badgeTag = <span className="bg-emerald-600 text-white text-[8px] sm:text-[9px] font-black px-2 py-0.5 rounded-full shrink-0 shadow-xs">✓ BENAR</span>
+                            boxStyle = 'bg-emerald-50 border-emerald-200 text-emerald-950'
+                            boxTitleStyle = 'text-emerald-800'
+                            boxTextStyle = 'text-emerald-900'
+                            boxLabel = 'ALUR SEBAB-AKIBAT (HUBUNGAN BIOLOGIS):'
+                          } else if (isChecked && !isCause) {
+                            // 2. SALAH / PENGECOH (Dipilih tapi Bukan Penyebab)
+                            cardStyle = 'bg-rose-50/60 border-2 border-rose-400'
+                            iconBg = 'bg-rose-600 text-white'
+                            iconSymbol = '✕'
+                            badgeTag = <span className="bg-rose-600 text-white text-[8px] sm:text-[9px] font-black px-2 py-0.5 rounded-full shrink-0 shadow-xs">✕ KURANG TEPAT</span>
+                            boxStyle = 'bg-rose-50 border-rose-200 text-rose-950'
+                            boxTitleStyle = 'text-rose-800'
+                            boxTextStyle = 'text-rose-900'
+                            boxLabel = 'PENJELASAN EVALUASI:'
+                          } else if (!isChecked && isCause) {
+                            // 3. TERLEWATKAN (Harusnya Dipilih tapi Terlewat)
+                            cardStyle = 'bg-amber-50/60 border-2 border-amber-400'
+                            iconBg = 'bg-amber-500 text-white'
+                            iconSymbol = '!'
+                            badgeTag = <span className="bg-amber-500 text-white text-[8px] sm:text-[9px] font-black px-2 py-0.5 rounded-full shrink-0 shadow-xs">⚠️ TERLEWATKAN</span>
+                            boxStyle = 'bg-amber-50 border-amber-200 text-amber-950'
+                            boxTitleStyle = 'text-amber-800'
+                            boxTextStyle = 'text-amber-900'
+                            boxLabel = 'ALUR SEBAB-AKIBAT (PENYEBAB ANEMIA):'
+                          } else {
+                            // 4. TEPAT DIHINDARI (Bukan Penyebab & Tidak Dipilih)
+                            cardStyle = 'bg-slate-50 border border-slate-200'
+                            iconBg = 'bg-slate-500 text-white'
+                            iconSymbol = '✓'
+                            badgeTag = <span className="bg-slate-600 text-white text-[8px] sm:text-[9px] font-black px-2 py-0.5 rounded-full shrink-0">✓ TIDAK BERHUBUNGAN</span>
+                            boxStyle = 'bg-white border-slate-200 text-slate-800'
+                            boxTitleStyle = 'text-slate-600'
+                            boxTextStyle = 'text-slate-700'
+                            boxLabel = 'PENJELASAN EVALUASI:'
+                          }
+
+                          return (
+                            <div
+                              key={option.id}
+                              className={`p-2 rounded-xl border transition-all shadow-xs flex-none flex flex-col ${cardStyle}`}
+                            >
+                              <div className="flex items-center justify-between gap-1.5 mb-1">
+                                <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                                  <div className={`w-4 h-4 sm:w-5 sm:h-5 rounded font-black text-[10px] sm:text-xs flex items-center justify-center shrink-0 shadow-xs ${iconBg}`}>
+                                    {iconSymbol}
+                                  </div>
+                                  <span className="text-xs sm:text-sm shrink-0">{option.icon}</span>
+                                  <span className="text-[9.5px] sm:text-[10.5px] font-black leading-tight text-slate-900 truncate">
+                                    {option.title}
+                                  </span>
+                                </div>
+                                {badgeTag}
+                              </div>
+
+                              {/* KARTU KETERANGAN EVALUASI PERSIS GAMBAR 2 */}
+                              <div className={`rounded-lg px-2.5 py-1 border ${boxStyle}`}>
+                                <div className={`text-[7.5px] sm:text-[8px] font-black uppercase tracking-wider flex items-center gap-1 mb-0.5 ${boxTitleStyle}`}>
+                                  <span>💡</span>
+                                  <span>{boxLabel}</span>
+                                </div>
+                                <p className={`text-[8px] sm:text-[9px] font-bold leading-snug ${boxTextStyle}`}>
+                                  {option.bioExplanation}
+                                </p>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+
+                  </div>
+
+                  {/* FOOTER BUTTONS: BALIK KE MENU DI KIRI, LIHAT SKOR DI TENGAH, GAME SELANJUTNYA DI KANAN */}
+                  <div className="flex items-center justify-between gap-2 sm:gap-3 pt-2 border-t border-slate-200 shrink-0">
+                    <button
+                      onClick={() => {
+                        playAudioFeedback('click')
+                        onBack && onBack()
+                      }}
+                      className="bg-[#003049] hover:bg-[#002233] active:scale-95 text-white font-extrabold text-[10px] sm:text-xs px-4 sm:px-6 py-2 rounded-full shadow-md transition-all cursor-pointer flex items-center gap-1.5"
+                    >
+                      <span>🏠</span>
+                      <span>Balik ke Menu</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        playAudioFeedback('click')
+                        setShowScoreModal(true)
+                      }}
+                      className="bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-black text-[10px] sm:text-xs px-4 sm:px-6 py-2 rounded-full shadow-md transition-all cursor-pointer flex items-center gap-1.5"
+                    >
+                      <span>⭐</span>
+                      <span>Lihat Skor Pop-up</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        playAudioFeedback('click')
+                        onComplete && onComplete({ score: earnedScore, missionId: misiId, nextMission: 'd' })
+                      }}
+                      className="bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 active:scale-95 text-white font-extrabold text-[10px] sm:text-xs px-5 sm:px-7 py-2 rounded-full shadow-lg transition-all cursor-pointer uppercase tracking-wider flex items-center justify-center gap-1.5"
+                    >
+                      <span>Game Selanjutnya</span>
+                      <span className="text-sm font-black">➔</span>
+                    </button>
+                  </div>
+
+                </div>
+              )}
+
+            </div>
+          </div>
+        )}
+
+        {/* =========================================================================
+            POPUP HASIL SKOR DETEKTIF
+           ========================================================================= */}
+        {showScoreModal && (
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-y-auto overscroll-contain py-3 sm:py-6">
+            <div className="relative bg-white rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 max-w-sm sm:max-w-md w-full text-center shadow-2xl border-4 border-amber-400 flex flex-col items-center animate-in zoom-in duration-200 max-h-[92dvh] overflow-y-auto custom-scrollbar my-auto">
+              {/* TOMBOL TUTUP / KELUAR CEPAT */}
+              <button
+                onClick={() => {
+                  playAudioFeedback('click')
+                  onBack && onBack()
+                }}
+                className="absolute top-2.5 right-2.5 sm:top-3.5 sm:right-3.5 w-7 h-7 rounded-full bg-slate-100 hover:bg-rose-500 text-slate-500 hover:text-white font-black text-xs flex items-center justify-center shadow transition-all active:scale-90 cursor-pointer border border-slate-300 z-10"
+                title="Keluar"
+              >
+                ✕
+              </button>
+
+              <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mb-1 text-2xl shadow-inner flex-shrink-0">
+                🕵️‍♀️
+              </div>
+              
+              <h2 className="text-[#003049] font-black text-sm sm:text-base mb-1 uppercase tracking-wide">
+                HASIL EVALUASI INVESTIGASI (LEVEL C)
+              </h2>
+              
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-2 px-3 sm:px-4 mb-2 flex items-center justify-between w-full">
+                <div className="text-left">
+                  <span className="text-slate-600 font-bold text-[10px] sm:text-xs block">
+                    Skor Detektif Medis:
+                  </span>
+                  <span className="text-amber-700 font-black text-[10px] sm:text-xs">
+                    {earnedScore >= 100 ? '⭐⭐⭐ Detektif Medis Handal' : earnedScore >= 75 ? '⭐⭐ Detektif Medis Teliti' : '⭐ Detektif Pemula'}
+                  </span>
+                </div>
+                <span className="text-amber-600 font-black text-xl sm:text-2xl">
+                  {earnedScore} PTS
                 </span>
               </div>
 
-              {/* DESKRIPSI & TOMBOL MENU LEVEL */}
-              <div className="col-span-8 flex flex-col gap-1.5 sm:gap-2 text-left">
-                {/* SPEECH BUBBLE */}
-                <div className="relative bg-[#F4F9F6] border border-emerald-300 rounded-xl p-1.5 sm:p-2 shadow-xs">
-                  <div className="text-emerald-950 font-black text-[11px] sm:text-xs leading-tight">
-                    MISI SEHAT: Melawan Anemia
-                  </div>
-                  <p className="text-emerald-800 text-[9.5px] sm:text-[10.5px] font-medium mt-0.5 leading-tight">
-                    "Siswa mampu menilai kebenaran seputar tanda gejala dan menciptakan alur terjadinya anemia yang akurat tanpa mitos!"
-                  </p>
-                </div>
+              {/* GELAR DETEKTIF MEDIS */}
+              <div className="w-full mb-3 px-3 py-1 rounded-xl bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-amber-950 font-black text-[10px] sm:text-[11px] shadow-sm border border-amber-300 flex items-center justify-center gap-1.5 animate-bounce">
+                <span>🎖️</span>
+                <span>GELAR: {earnedScore >= 100 ? 'DETEKTIF MEDIS CERMAT & TANGGAP' : 'DETEKTIF MEDIS PEMBELAJAR'}</span>
+              </div>
 
-                {/* DUA TINGKAT LEVEL */}
-                <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
-                  {/* LEVEL 1 CARD */}
-                  <div
-                    onClick={() => {
-                      if (alreadyCompleted) return
-                      playSound('click')
-                      setPhase('level1')
-                    }}
-                    className={`p-1.5 sm:p-2 rounded-xl border-2 border-emerald-500 bg-gradient-to-br from-emerald-50 to-teal-50 transition-all shadow-xs group ${
-                      alreadyCompleted ? 'opacity-60 cursor-not-allowed' : 'hover:from-emerald-100 hover:to-teal-100 cursor-pointer hover:-translate-y-0.5 active:scale-95'
-                    }`}
-                  >
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center text-xs sm:text-sm shadow-xs group-hover:scale-105 transition-transform flex-shrink-0">
-                        🔎
-                      </div>
-                      <div className="min-w-0">
-                        <span className="inline-block text-[7.5px] sm:text-[8px] font-black text-emerald-700 uppercase tracking-wider bg-emerald-200/70 px-1 py-0.2 rounded-full">
-                          LEVEL 1
-                        </span>
-                        <h4 className="font-extrabold text-slate-800 text-[10px] sm:text-xs leading-tight truncate">
-                          Fakta vs Mitos
-                        </h4>
-                        <p className="text-slate-600 text-[8.5px] sm:text-[9.5px] leading-tight truncate">
-                          Pilah tanda gejala
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+              <div className="w-full flex flex-col gap-1.5 flex-shrink-0">
+                <button
+                  onClick={() => {
+                    playAudioFeedback('click')
+                    onComplete && onComplete({ score: earnedScore, missionId: misiId, nextMission: 'd' })
+                  }}
+                  className="w-full bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 active:scale-95 text-white font-black py-2.5 px-4 rounded-full shadow-lg text-xs uppercase tracking-wider cursor-pointer transition-all flex items-center justify-center gap-1.5 border border-emerald-400"
+                >
+                  <span>Lanjut ke Game Selanjutnya: Misi D (Fakta vs Mitos)</span>
+                  <span className="text-sm font-black">➔</span>
+                </button>
 
-                  {/* LEVEL 2 CARD */}
-                  <div
-                    onClick={() => {
-                      if (alreadyCompleted) return
-                      playSound('click')
-                      setPhase('level2')
-                    }}
-                    className={`p-1.5 sm:p-2 rounded-xl border-2 border-teal-500 bg-gradient-to-br from-teal-50 to-cyan-50 transition-all shadow-xs group ${
-                      alreadyCompleted ? 'opacity-60 cursor-not-allowed' : 'hover:from-teal-100 hover:to-cyan-100 cursor-pointer hover:-translate-y-0.5 active:scale-95'
-                    }`}
-                  >
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-teal-700 text-white flex items-center justify-center text-xs sm:text-sm shadow-xs group-hover:scale-105 transition-transform flex-shrink-0">
-                        🧩
-                      </div>
-                      <div className="min-w-0">
-                        <span className="inline-block text-[7.5px] sm:text-[8px] font-black text-teal-700 uppercase tracking-wider bg-teal-200/70 px-1 py-0.2 rounded-full">
-                          LEVEL 2
-                        </span>
-                        <h4 className="font-extrabold text-slate-800 text-[10px] sm:text-xs leading-tight truncate">
-                          Alur Anemia
-                        </h4>
-                        <p className="text-slate-600 text-[8.5px] sm:text-[9.5px] leading-tight truncate">
-                          Susun urutan puzzle
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* TOMBOL MULAI UTAMA */}
-                <div className="flex items-center gap-2 pt-0.5">
+                <div className="grid grid-cols-2 gap-2">
                   <button
                     onClick={() => {
-                      playSound('click')
-                      setPhase('level1')
+                      playAudioFeedback('click')
+                      onComplete && onComplete({ score: earnedScore, missionId: misiId })
+                      onBack && onBack()
                     }}
-                    className="w-full py-1.5 sm:py-2 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 text-white font-black text-xs sm:text-sm shadow-md active:scale-95 transition-all text-center tracking-wide flex items-center justify-center gap-1.5 cursor-pointer border border-emerald-400"
+                    className="w-full bg-[#003049] hover:bg-[#002233] active:scale-95 text-white font-extrabold py-2 px-3 rounded-full text-xs uppercase tracking-wider cursor-pointer transition-all flex items-center justify-center gap-1"
                   >
-                    <span>Mulai Misi Sehat Sekarang</span>
-                    <svg className="w-4 h-4 stroke-[3]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                    </svg>
+                    <span>🏠 Balik Menu</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      playAudioFeedback('click')
+                      setShowScoreModal(false)
+                    }}
+                    className="w-full bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-extrabold py-2 px-3 rounded-full border border-slate-300 text-xs uppercase tracking-wider cursor-pointer transition-all flex items-center justify-center gap-1"
+                  >
+                    <span>🔍 Reviu Buku</span>
                   </button>
                 </div>
               </div>
@@ -678,685 +895,7 @@ export default function Day1LevelC({ onBack, onComplete, misiId = 'misi_h1_c' })
           </div>
         )}
 
-        {/* -----------------------------------------------------------------------
-            FASE 1: LEVEL 1 (EVALUASI FAKTA VS MITOS - LAYAR NAIK KE ATAS & KOMPAK)
-           ----------------------------------------------------------------------- */}
-        {phase === 'level1' && (
-          <div className={`w-full max-w-4xl h-full flex flex-col items-center justify-between max-h-[calc(100dvh-48px)] overflow-hidden ${isShaking ? 'animate-shake' : ''}`}>
-            {/* SUBHEADER PROGRESS LEVEL 1 DENGAN COMBO & TIMER */}
-            <div className="w-full bg-white/90 backdrop-blur-md rounded-xl py-0.5 px-2.5 shadow-xs border border-emerald-600/30 flex items-center justify-between gap-2 mb-0.5 flex-shrink-0">
-              <div className="flex items-center gap-1.5">
-                <span className="px-2 py-0.5 rounded-full bg-emerald-600 text-white font-extrabold text-[9px] sm:text-xs">
-                  MISI 1
-                </span>
-                <span className="text-slate-800 font-extrabold text-xs sm:text-sm">
-                  Pilah-Pilih Tanda Gejala
-                </span>
-                {/* COMBO STREAK BADGE */}
-                {streakCount >= 2 && (
-                  <span className="px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-white font-black text-[9px] sm:text-[10px] animate-bounce shadow flex items-center gap-0.5">
-                    <span>🔥</span>
-                    <span>{streakCount}x COMBO!</span>
-                  </span>
-                )}
-              </div>
-
-              {/* URGENSI WAKTU (TIMER ADRENALIN) */}
-              <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full border font-black text-[9px] sm:text-xs transition-all ${
-                timeLeft <= 6
-                  ? 'bg-rose-100 text-rose-700 border-rose-400 animate-danger-pulse'
-                  : 'bg-slate-100 text-slate-700 border-slate-300'
-              }`}>
-                <span>⏱️</span>
-                <span>{timeLeft}s</span>
-              </div>
-
-              {/* PROGRESS BAR */}
-              <div className="flex-1 max-w-[100px] sm:max-w-xs flex items-center gap-1.5">
-                <div className="flex-1 h-1.5 rounded-full bg-slate-200 overflow-hidden border border-slate-300">
-                  <div
-                    className="h-full bg-gradient-to-r from-emerald-500 to-teal-600 transition-all duration-300 rounded-full"
-                    style={{ width: `${((currentCardIndex) / deck.length) * 100}%` }}
-                  />
-                </div>
-                <span className="text-[10px] font-black text-slate-700">
-                  {currentCardIndex}/{deck.length}
-                </span>
-              </div>
-
-              {/* POIN SKOR SEMENTARA */}
-              <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300 font-black text-[9.5px] sm:text-xs">
-                <span>⭐ Skor:</span>
-                <span className="text-amber-700">{earnedScore} PTS</span>
-              </div>
-            </div>
-
-            {/* PETUNJUK SPEECH BUBBLE */}
-            <div className="w-full bg-emerald-50/95 border border-emerald-400 rounded-lg px-2 py-0.5 text-center text-[9px] sm:text-[10px] font-semibold text-emerald-950 mb-0.5 shadow-xs flex items-center justify-center gap-1 flex-shrink-0">
-              <span>💡</span>
-              <span>
-                Gunakan tombol <b>FAKTA</b> atau <b>MITOS</b>. Raih <b>Combo Streak</b> untuk respon akurat kilat!
-              </span>
-            </div>
-
-            {/* AREA UTAMA PEMILAHAN: DROP ZONE FAKTA & MITOS */}
-            <div className="w-full grid grid-cols-3 gap-1.5 sm:gap-2.5 items-stretch flex-1 min-h-0 py-0.5">
-
-              {/* DROP ZONE FAKTA (HIJAU) */}
-              <div
-                onDragOver={(e) => handleDragOver(e, 'fakta')}
-                onDragLeave={handleDragLeave}
-                onDrop={(e) => handleDrop(e, 'fakta')}
-                className={`rounded-2xl p-2 sm:p-2.5 flex flex-col justify-between items-center border-2 sm:border-3 transition-all duration-200 shadow-md ${
-                  dragOverZone === 'fakta'
-                    ? 'border-emerald-400 bg-emerald-500/30 scale-[1.01]'
-                    : 'border-emerald-500/70 bg-gradient-to-b from-[#1E523C] to-[#123627]'
-                }`}
-              >
-                <div className="w-full flex items-center justify-between pb-1 border-b border-emerald-400/40 flex-shrink-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-white text-emerald-700 font-black text-xs sm:text-sm flex items-center justify-center shadow">
-                      ✓
-                    </span>
-                    <h3 className="text-white font-black text-xs sm:text-base tracking-wider">
-                      FAKTA
-                    </h3>
-                  </div>
-                  <span className="px-1.5 py-0.2 rounded-full bg-emerald-300/30 text-emerald-100 text-[9px] font-bold">
-                    {faktaCount} Tersaring
-                  </span>
-                </div>
-
-                <div className="my-auto py-1 text-center flex-1 flex flex-col items-center justify-center">
-                  <div className="relative w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 flex items-center justify-center mb-1 transition-transform group-hover:scale-105">
-                    <img
-                      src={tongFaktaImg}
-                      alt="Tong Fakta"
-                      className="w-full h-full object-contain drop-shadow-[0_8px_16px_rgba(0,0,0,0.4)] pointer-events-none"
-                    />
-                  </div>
-                  <p className="text-emerald-100 text-[9.5px] sm:text-[10.5px] font-medium px-1 leading-tight line-clamp-2">
-                    Tarik kartu ke sini jika ini FAKTA medis anemia
-                  </p>
-                </div>
-
-                {/* TOMBOL AKSESIBEL KLIK LANGSUNG */}
-                <button
-                  onClick={() => handleSortCard('fakta')}
-                  className="w-full py-1.5 sm:py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-white font-black text-xs shadow transition-all cursor-pointer border border-emerald-300 flex items-center justify-center gap-1 flex-shrink-0"
-                >
-                  <span>✓ Pilih FAKTA</span>
-                </button>
-              </div>
-
-              {/* KARTU DI TENGAH DENGAN STEMPEL & FEVER GLOW */}
-              <div className="flex flex-col items-center justify-center p-0.5 relative">
-                {currentCardIndex < deck.length ? (
-                  <div
-                    draggable
-                    onDragStart={handleDragStart}
-                    className={`relative w-full max-w-[240px] bg-white rounded-2xl p-2 sm:p-2.5 shadow-xl border-2 sm:border-3 transition-all cursor-grab active:cursor-grabbing flex flex-col items-center text-center justify-between h-full max-h-[165px] sm:max-h-[185px] group animate-scaleUp ${
-                      streakCount >= 3
-                        ? 'animate-fever border-amber-400 ring-2 ring-amber-300'
-                        : 'border-slate-300 hover:border-emerald-500'
-                    }`}
-                  >
-                    {/* OVERLAY STEMPEL ADRENALIN */}
-                    {activeStamp && (
-                      <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none bg-black/15 rounded-2xl backdrop-blur-[0.5px]">
-                        <div className={`px-3 py-1.5 rounded-xl border-3 font-black text-xs sm:text-sm tracking-wider uppercase shadow-2xl animate-stamp ${
-                          activeStamp.type === 'fakta'
-                            ? 'border-emerald-600 bg-emerald-500 text-white'
-                            : 'border-rose-600 bg-rose-500 text-white'
-                        }`}>
-                          {activeStamp.text}
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="w-full flex items-center justify-between flex-shrink-0">
-                      <span className="text-[8px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded-full bg-teal-100 text-teal-800">
-                        {deck[currentCardIndex].category}
-                      </span>
-                      <span className="text-[9px] text-slate-500 font-bold">
-                        #{currentCardIndex + 1}/{deck.length}
-                      </span>
-                    </div>
-
-                    <div className="my-auto py-0.5 flex-1 flex flex-col items-center justify-center">
-                      <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center text-sm mb-0.5 shadow-inner">
-                        📄
-                      </div>
-                      <p className="text-slate-900 font-black text-xs sm:text-[12px] leading-snug line-clamp-3">
-                        "{deck[currentCardIndex].text}"
-                      </p>
-                    </div>
-
-                    <div className="w-full text-[8.5px] text-slate-400 font-bold border-t border-slate-200 pt-0.5 flex items-center justify-center gap-1 flex-shrink-0">
-                      <span>Klik Tombol di Kiri / Kanan</span>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="p-3 bg-white/95 rounded-2xl shadow-lg text-center">
-                    <p className="font-extrabold text-emerald-800 text-xs sm:text-sm">Semua kartu berhasil disaring!</p>
-                  </div>
-                )}
-              </div>
-
-              {/* DROP ZONE MITOS (MERAH) */}
-              <div
-                onDragOver={(e) => handleDragOver(e, 'mitos')}
-                onDragLeave={handleDragLeave}
-                onDrop={(e) => handleDrop(e, 'mitos')}
-                className={`rounded-2xl p-1.5 sm:p-2 flex flex-col justify-between items-center border-2 sm:border-3 transition-all duration-200 shadow-md ${
-                  dragOverZone === 'mitos'
-                    ? 'border-rose-400 bg-rose-500/30 scale-[1.01]'
-                    : 'border-rose-500/70 bg-gradient-to-b from-[#8C141E] to-[#540B11]'
-                }`}
-              >
-                <div className="w-full flex items-center justify-between pb-0.5 border-b border-rose-400/40 flex-shrink-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-white text-rose-700 font-black text-xs flex items-center justify-center shadow">
-                      ✕
-                    </span>
-                    <h3 className="text-white font-black text-xs sm:text-sm tracking-wider">
-                      MITOS
-                    </h3>
-                  </div>
-                  <span className="px-1.5 py-0.2 rounded-full bg-rose-300/30 text-rose-100 text-[8.5px] font-bold">
-                    {mitosCount} Disingkirkan
-                  </span>
-                </div>
-
-                <div className="my-auto py-0.5 text-center flex-1 flex flex-col items-center justify-center">
-                  <div className="relative w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 flex items-center justify-center mb-1 transition-transform group-hover:scale-105">
-                    <img
-                      src={tongMitosImg}
-                      alt="Tong Mitos"
-                      className="w-full h-full object-contain drop-shadow-[0_8px_16px_rgba(0,0,0,0.4)] pointer-events-none"
-                    />
-                  </div>
-                  <p className="text-rose-100 text-[9px] sm:text-[10px] font-medium px-1 leading-tight line-clamp-2">
-                    Tarik atau tekan tombol di bawah jika ini MITOS
-                  </p>
-                </div>
-
-                {/* TOMBOL AKSESIBEL KLIK LANGSUNG */}
-                <button
-                  onClick={() => handleSortCard('mitos')}
-                  className="w-full py-1 sm:py-1.5 rounded-xl bg-rose-500 hover:bg-rose-400 active:scale-95 text-white font-black text-xs shadow transition-all cursor-pointer border border-rose-300 flex items-center justify-center gap-1 flex-shrink-0"
-                >
-                  <span>✕ Pilih MITOS</span>
-                </button>
-              </div>
-
-            </div>
-          </div>
-        )}
-
-
-
-        {/* -----------------------------------------------------------------------
-            TRANSISI LEVEL 1 COMPLETE (MODAL MOCKUP 2 KE 3)
-           ----------------------------------------------------------------------- */}
-        {/* -----------------------------------------------------------------------
-            TRANSISI LEVEL 1 COMPLETE (MODAL MOCKUP 2 KE 3) - KOMPAK FIT LAYAR
-           ----------------------------------------------------------------------- */}
-        {phase === 'level1_complete' && (
-          <div className="w-full max-w-lg sm:max-w-xl bg-white/95 backdrop-blur-md rounded-2xl sm:rounded-3xl p-3.5 sm:p-4 shadow-2xl border-3 border-emerald-500 flex flex-col items-center text-center animate-scaleUp max-h-[80vh] justify-between">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-emerald-100 border-2 border-emerald-400 flex items-center justify-center text-xl sm:text-2xl mb-1 shadow-sm flex-shrink-0">
-              ✨
-            </div>
-            <span className="text-[9.5px] font-black uppercase tracking-wider text-emerald-700 px-2.5 py-0.5 rounded-full bg-emerald-100 mb-0.5 flex-shrink-0">
-              LEVEL 1 SELESAI
-            </span>
-            <h2 className="text-slate-900 font-black text-sm sm:text-base mt-0.5 flex-shrink-0">
-              Teks Sudah Bersih dari Mitos!
-            </h2>
-            <p className="text-slate-600 text-[10.5px] sm:text-[11.5px] my-1 sm:my-1.5 leading-relaxed max-w-md">
-              Kamu berhasil memilah seluruh tanda gejala fakta dan menyingkirkan mitos yang keliru. Sekarang, saatnya melangkah ke <b>Level 2</b> untuk merumuskan alur terjadinya anemia!
-            </p>
-
-            <div className="w-full max-w-md bg-emerald-50 rounded-xl p-1.5 border border-emerald-200 flex items-center justify-around my-1 text-[10.5px] sm:text-[11px] font-bold text-emerald-900 flex-shrink-0">
-              <div>✅ Fakta Benar: {faktaCount}</div>
-              <div>🚫 Mitos Disingkirkan: {mitosCount}</div>
-            </div>
-
-            <button
-              onClick={() => {
-                playSound('click')
-                setPhase('level2')
-              }}
-              className="mt-1.5 w-full max-w-sm py-2 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 text-white font-black text-xs sm:text-sm shadow-md active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-1.5 border border-emerald-400 flex-shrink-0"
-            >
-              <span>Lanjut ke Level 2: Ciptakan Alur</span>
-              <svg className="w-4 h-4 stroke-[3]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
-            </button>
-          </div>
-        )}
-
-        {/* -----------------------------------------------------------------------
-            FASE 2: LEVEL 2 (MEMBANGUN ALUR ANEMIA - LEBIH LAPANG, BEBAS BENTROK)
-           ----------------------------------------------------------------------- */}
-        {phase === 'level2' && (
-          <div className={`w-full max-w-4xl h-full flex flex-col items-center justify-between max-h-[calc(100dvh-48px)] overflow-hidden relative ${isShaking ? 'animate-shake' : ''}`}>
-            {/* OVERLAY STEMPEL KEMENANGAN ALUR */}
-            {activeStamp && (
-              <div className="absolute inset-0 z-50 flex items-center justify-center pointer-events-none bg-black/20 rounded-2xl backdrop-blur-[1px]">
-                <div className="px-5 py-2.5 rounded-2xl border-4 border-emerald-500 bg-emerald-600 text-white font-black text-sm sm:text-base tracking-wider uppercase shadow-2xl animate-stamp">
-                  {activeStamp.text}
-                </div>
-              </div>
-            )}
-
-            {/* SUBHEADER & TAG */}
-            <div className="w-full bg-white/90 backdrop-blur-md rounded-xl py-0.5 px-2.5 shadow-xs border border-teal-600/30 flex items-center justify-between gap-2 mb-0.5 flex-shrink-0">
-              <div className="flex items-center gap-1.5">
-                <span className="px-2 py-0.5 rounded-full bg-teal-700 text-white font-extrabold text-[9px] sm:text-xs">
-                  MISI 2
-                </span>
-                <span className="text-slate-800 font-extrabold text-xs sm:text-sm">
-                  Pasang 4 Puzzle Alur Anemia
-                </span>
-              </div>
-
-              {/* SKOR SEMENTARA */}
-              <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300 font-black text-[9.5px] sm:text-xs">
-                <span>⭐ Skor:</span>
-                <span className="text-amber-700">{earnedScore} PTS</span>
-              </div>
-            </div>
-
-            {/* TIMELINE PUZZLE TRACK [MULAI] -> [SLOT 1..4] -> [ANEMIA TERJADI] */}
-            <div className="w-full bg-white/90 backdrop-blur-md rounded-xl p-1 shadow-sm border border-teal-700/30 mb-0.5 flex-shrink-0">
-              {/* FLOWING BLOODLINE ENERGY BAR */}
-              <div className="w-full h-1 bg-slate-200 rounded-full mb-1 overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-emerald-500 via-teal-400 to-rose-500 transition-all duration-500"
-                  style={{ width: `${Math.max(10, (slots.filter(Boolean).length / 4) * 100)}%` }}
-                />
-              </div>
-
-              <div className="flex flex-row items-center justify-between gap-1 sm:gap-1.5">
-
-                {/* NODE MULAI (HIJAU) */}
-                <div className="flex-shrink-0 flex items-center gap-1 bg-gradient-to-br from-emerald-600 to-teal-800 text-white px-1.5 py-1 rounded-lg shadow border border-emerald-300">
-                  <div className="w-3.5 h-3.5 rounded-full bg-emerald-400 flex items-center justify-center font-black text-[8px] text-emerald-950 shadow">
-                    ▶
-                  </div>
-                  <div className="text-left leading-none">
-                    <div className="text-[7px] text-emerald-200 font-extrabold uppercase tracking-wider">
-                      Awal
-                    </div>
-                    <div className="text-[9.5px] font-black">
-                      MULAI
-                    </div>
-                  </div>
-                </div>
-
-                {/* 4 PUZZLE INTERLOCKING SLOTS */}
-                <div className="flex-1 w-full grid grid-cols-4 gap-1 sm:gap-1.5 my-0.2">
-                  {slots.map((slotPiece, idx) => (
-                    <div
-                      key={idx}
-                      onClick={() => handleSlotClick(idx)}
-                      className={`relative min-h-[40px] sm:min-h-[46px] rounded-lg p-0.5 sm:p-1 flex flex-col justify-between items-center text-center transition-all cursor-pointer select-none border-2 ${
-                        slotPiece
-                          ? 'bg-gradient-to-b from-white to-emerald-50/80 border-emerald-500 shadow-xs hover:scale-[1.01]'
-                          : 'bg-slate-100/80 border-dashed border-slate-400 hover:bg-slate-200/80 hover:border-teal-500'
-                      }`}
-                    >
-                      {/* NOTCH / TAB INDIKATOR PUZZLE */}
-                      <div className="w-full flex items-center justify-between leading-none">
-                        <span className="text-[7.5px] font-black px-1 py-0.2 rounded-full bg-slate-200 text-slate-700">
-                          Tahap {idx + 1}
-                        </span>
-                        {slotPiece && (
-                          <span className="text-[7.5px] text-rose-500 font-bold hover:underline">
-                            ✕ Lepas
-                          </span>
-                        )}
-                      </div>
-
-                      {slotPiece ? (
-                        <>
-                          <div className="my-0.2 scale-75">
-                            {renderPuzzleIcon(slotPiece.iconType)}
-                          </div>
-                          <div className="text-[8.5px] sm:text-[9.5px] font-extrabold text-slate-900 leading-tight line-clamp-1">
-                            {slotPiece.title}
-                          </div>
-                        </>
-                      ) : (
-                        <div className="my-auto text-center">
-                          <span className="text-[10px] opacity-40">➕</span>
-                          <p className="text-[7.5px] text-slate-500 font-bold">
-                            Pasang di sini
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-
-                {/* NODE AKHIR (MERAH) */}
-                <div className="flex-shrink-0 flex items-center gap-1 bg-gradient-to-br from-rose-600 to-red-800 text-white px-1.5 py-1 rounded-lg shadow border border-rose-300">
-                  <div className="w-3.5 h-3.5 rounded-full bg-rose-400 flex items-center justify-center font-black text-[8px] text-rose-950 shadow">
-                    ⚠️
-                  </div>
-                  <div className="text-left leading-none">
-                    <div className="text-[7px] text-rose-200 font-extrabold uppercase tracking-wider">
-                      Hasil
-                    </div>
-                    <div className="text-[9.5px] font-black whitespace-nowrap">
-                      ANEMIA TERJADI
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-            </div>
-
-            {/* BAKI KEPINGAN PUZZLE YANG TERSEDIA (LAPANG & TIDAK TERPOTONG) */}
-            <div className="w-full bg-slate-900/85 backdrop-blur-md rounded-xl p-1.5 sm:p-2 border border-emerald-400/30 shadow-lg flex flex-col items-center flex-1 min-h-0 justify-between">
-              <div className="w-full flex items-center justify-between mb-0.5 flex-shrink-0">
-                <span className="text-emerald-300 font-extrabold text-[10px] flex items-center gap-1">
-                  <span>📦</span> Kepingan Alur ({availablePieces.length}/4):
-                </span>
-                <span className="text-[8.5px] text-slate-300">
-                  Ketuk kepingan untuk memasang
-                </span>
-              </div>
-
-              {availablePieces.length > 0 ? (
-                <div className="w-full grid grid-cols-4 gap-1 sm:gap-1.5 my-auto">
-                  {availablePieces.map((piece) => {
-                    const isSelected = selectedPieceId === piece.id
-                    return (
-                      <div
-                        key={piece.id}
-                        onClick={() => handleSelectPiece(piece.id)}
-                        className={`bg-white rounded-xl p-1 sm:p-1.5 flex flex-col items-center text-center justify-between cursor-pointer transition-all shadow-xs active:scale-95 border-2 ${
-                          isSelected
-                            ? 'border-amber-400 ring-2 ring-amber-300 scale-105'
-                            : 'border-slate-300 hover:border-emerald-500'
-                        }`}
-                      >
-                        <div className="my-0.2 scale-80">
-                          {renderPuzzleIcon(piece.iconType)}
-                        </div>
-                        <h5 className="font-extrabold text-slate-900 text-[8.5px] sm:text-[9.5px] leading-tight line-clamp-1">
-                          {piece.title}
-                        </h5>
-                      </div>
-                    )
-                  })}
-                </div>
-              ) : (
-                <div className="py-1 text-center text-emerald-200 text-[11px] font-bold my-auto">
-                  ✨ Seluruh kepingan terpasang! Klik "Periksa Alur" di bawah.
-                </div>
-              )}
-
-              {/* FEEDBACK VALIDASI STATUS */}
-              {level2Validation === 'wrong' && (
-                <div className="my-0.5 w-full bg-rose-500/90 text-white font-extrabold text-[9.5px] px-2 py-0.5 rounded-lg text-center shadow animate-shake flex-shrink-0">
-                  ❌ Urutan alur belum tepat! Periksa urutan dari makanan, cadangan tubuh, hingga hemoglobin.
-                </div>
-              )}
-
-              {level2Validation === 'correct' && (
-                <div className="my-0.5 w-full bg-emerald-500/95 text-white font-black text-xs px-2 py-0.5 rounded-lg text-center shadow animate-bounce flex-shrink-0">
-                  🎉 ALUR TEPAT DAN LENGKAP! Menghitung skor akhir...
-                </div>
-              )}
-
-              {/* ACTION BUTTONS: PERIKSA & RESET */}
-              <div className="w-full flex items-center justify-center gap-2 pt-0.5 border-t border-slate-700/60 flex-shrink-0">
-                <button
-                  onClick={handleResetSlots}
-                  className="px-2.5 py-1 rounded-lg bg-slate-700 hover:bg-slate-600 active:scale-95 text-white font-bold text-[11px] transition-all cursor-pointer"
-                >
-                  🔄 Reset
-                </button>
-                <button
-                  onClick={handleCheckSequence}
-                  disabled={slots.some(s => s === null)}
-                  className={`px-4 py-1 rounded-lg font-black text-[11px] shadow transition-all flex items-center gap-1.5 ${
-                    slots.some(s => s === null)
-                      ? 'bg-slate-600 text-slate-400 cursor-not-allowed'
-                      : 'bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white cursor-pointer active:scale-95 border border-emerald-300'
-                  }`}
-                >
-                  <span>✓ Periksa Alur Terjadinya Anemia</span>
-                </button>
-              </div>
-
-            </div>
-          </div>
-        )}
-
-
-
-        {/* -----------------------------------------------------------------------
-            FASE 3: GAME OVER / SCORE & COMPLETION (KOMPAK TANPA SCROLL)
-           ----------------------------------------------------------------------- */}
-        {phase === 'completed' && (
-          <div className="w-full max-w-xl bg-white/95 backdrop-blur-md rounded-2xl sm:rounded-3xl p-2.5 sm:p-3.5 shadow-2xl border-4 border-emerald-600 flex flex-col items-center text-center animate-scaleUp max-h-[90vh] overflow-y-auto custom-scrollbar justify-between">
-            {/* BADGE TITLE */}
-            <div className="w-full bg-[#1B4D3E] text-white rounded-xl py-1.5 px-3 shadow mb-1 border border-emerald-400/40">
-              <h2 className="text-sm sm:text-lg font-black tracking-wide">
-                SELAMAT!
-              </h2>
-              <p className="text-emerald-200 text-[9px] sm:text-[11px] font-bold uppercase tracking-wider">
-                Anda Telah Merumuskan Alur Sehat Tanpa Mitos
-              </p>
-            </div>
-
-            {/* BINTANG & SKOR */}
-            <div className="flex flex-col items-center my-0.5">
-              <div className="flex items-center gap-1 text-lg sm:text-xl text-amber-400 mb-0.5">
-                <span>⭐</span>
-                <span>⭐</span>
-                <span>⭐</span>
-                <span>⭐</span>
-                <span>⭐</span>
-              </div>
-              <div className="text-slate-500 text-[9px] font-bold uppercase tracking-widest">
-                Nilai Akhir Anda
-              </div>
-              <div className="text-xl sm:text-2xl font-black text-emerald-800">
-                {earnedScore} <span className="text-sm text-emerald-600 font-bold">PTS</span>
-              </div>
-            </div>
-
-            {/* DUA KARTU KOMPETENSI (CHECKLIST INDIKATOR) */}
-            <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-1.5 my-1">
-              <div className="p-1.5 sm:p-2 rounded-xl bg-emerald-50 border border-emerald-300 flex items-center gap-2 text-left shadow-xs">
-                <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-emerald-600 text-white font-black text-xs sm:text-sm flex items-center justify-center flex-shrink-0 shadow">
-                  ✓
-                </div>
-                <div className="text-[10px] sm:text-[11px] font-extrabold text-emerald-950 leading-tight">
-                  Siswa mampu menilai kebenaran tanda gejala anemia (C5)
-                </div>
-              </div>
-
-              <div className="p-1.5 sm:p-2 rounded-xl bg-teal-50 border border-teal-300 flex items-center gap-2 text-left shadow-xs">
-                <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-teal-600 text-white font-black text-xs sm:text-sm flex items-center justify-center flex-shrink-0 shadow">
-                  ✓
-                </div>
-                <div className="text-[10px] sm:text-[11px] font-extrabold text-teal-950 leading-tight">
-                  Siswa mampu merumuskan alur sederhana terjadinya anemia (C6)
-                </div>
-              </div>
-            </div>
-
-            {/* RANGKUMAN ALUR YANG TELAH DIRUMUSKAN */}
-            <div className="w-full bg-slate-50 rounded-xl p-1.5 sm:p-2 border border-slate-200 text-left my-1">
-              <div className="text-[9.5px] font-black uppercase tracking-wider text-slate-600 mb-1 flex items-center gap-1">
-                <span>🔗</span> Alur Terjadinya Anemia yang Terverifikasi:
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 sm:gap-1.5 text-center">
-                <div className="p-1 sm:p-1.5 rounded-lg bg-amber-50 border border-amber-200 text-[8.5px] sm:text-[9.5px] font-bold text-amber-950 leading-tight">
-                  1. Kurang Asupan Zat Besi
-                </div>
-                <div className="p-1 sm:p-1.5 rounded-lg bg-rose-50 border border-rose-200 text-[8.5px] sm:text-[9.5px] font-bold text-rose-950 leading-tight">
-                  2. Cadangan Zat Besi Menurun
-                </div>
-                <div className="p-1 sm:p-1.5 rounded-lg bg-red-50 border border-red-200 text-[8.5px] sm:text-[9.5px] font-bold text-red-950 leading-tight">
-                  3. Hemoglobin Rendah
-                </div>
-                <div className="p-1 sm:p-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-[8.5px] sm:text-[9.5px] font-bold text-emerald-950 leading-tight">
-                  4. Anemia
-                </div>
-              </div>
-            </div>
-
-            {/* TOMBOL AKSI: LANJUT KE MISI D & KEMBALI */}
-            <div className="w-full flex flex-col gap-1.5 items-center justify-center mt-1 pt-1.5 border-t border-slate-200">
-              <button
-                onClick={() => {
-                  playSound('click')
-                  onComplete && onComplete({ score: earnedScore, missionId: 'misi_h1_c', nextMission: 'd' })
-                }}
-                className="w-full max-w-sm py-2 sm:py-2.5 rounded-xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:from-amber-400 hover:to-yellow-300 active:scale-95 text-slate-950 font-black text-xs sm:text-sm shadow-lg transition-all cursor-pointer border border-amber-300 flex items-center justify-center gap-2"
-              >
-                <span>Lanjut ke Game Misi D</span>
-                <span className="text-base font-black">➔</span>
-              </button>
-              <button
-                onClick={() => {
-                  playSound('click')
-                  onComplete && onComplete({ score: earnedScore, missionId: 'misi_h1_c' })
-                  onBack && onBack()
-                }}
-                className="w-full max-w-sm py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs border border-slate-300 transition-all cursor-pointer active:scale-95"
-              >
-                🏠 Kembali ke Menu Misi
-              </button>
-            </div>
-
-          </div>
-        )}
-
       </div>
-
-      {/* =========================================================================
-          POPUP MODAL TERPUSAT (ROOT LEVEL: Z-[100] AGAR TIDAK TERTUTUP HEADER)
-         ========================================================================= */}
-
-      {/* 1. POPUP FEEDBACK JIKA SALAH SORTING (LEVEL 1) - FIT & FULL VIEWPORT */}
-      {feedbackModal && (
-        <div className="fixed inset-0 z-[100] bg-black/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-          <div className="w-full max-w-sm sm:max-w-md bg-white rounded-2xl p-3 sm:p-4 shadow-2xl border-3 border-amber-400 flex flex-col items-center text-center animate-bounceIn max-h-[92vh] overflow-y-auto custom-scrollbar my-auto">
-            {/* HEADER BADGE DENGAN IKON KOMPAK */}
-            <div className="flex items-center gap-2 mb-1">
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center text-base sm:text-lg shadow-xs flex-shrink-0">
-                ⚠️
-              </div>
-              <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-rose-700 px-2.5 py-0.5 rounded-full bg-rose-50 border border-rose-200">
-                Pilihan Kurang Tepat
-              </span>
-            </div>
-
-            {/* INDIKATOR PENGURANGAN SKOR */}
-            <div className="bg-rose-100 border border-rose-300 text-rose-700 text-[10px] sm:text-[11px] font-black px-3 py-0.5 rounded-full my-0.5">
-              📉 Pengurangan Skor: -5 PTS
-            </div>
-
-            {/* KUTIPAN KARTU */}
-            <h3 className="font-extrabold text-slate-900 text-xs sm:text-sm my-1 leading-snug">
-              "{feedbackModal.card.text}"
-            </h3>
-            
-            {/* PENJELASAN EDUKASI */}
-            <p className="text-slate-800 text-[10.5px] sm:text-[11.5px] bg-amber-50 rounded-xl p-2 sm:p-2.5 border border-amber-200 my-1 leading-relaxed text-left font-medium max-h-[35vh] overflow-y-auto">
-              {feedbackModal.explanation}
-            </p>
-            
-            {/* TOMBOL LANJUTKAN */}
-            <button
-              onClick={dismissFeedbackModal}
-              className="mt-1 w-full py-2 rounded-xl bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-black text-xs shadow transition-all cursor-pointer border border-amber-400"
-            >
-              Saya Mengerti, Lanjutkan!
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* 2. POPUP FEEDBACK JIKA SALAH ALUR (LEVEL 2) - FIT & FULL VIEWPORT */}
-      {showLevel2WrongModal && (
-        <div className="fixed inset-0 z-[100] bg-black/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-          <div className="w-full max-w-sm sm:max-w-md bg-white rounded-2xl p-3 sm:p-4 shadow-2xl border-3 border-rose-500 flex flex-col items-center text-center animate-bounceIn max-h-[92vh] overflow-y-auto custom-scrollbar my-auto">
-            {/* HEADER BADGE DENGAN IKON KOMPAK */}
-            <div className="flex items-center gap-2 mb-1">
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center text-base sm:text-lg shadow-xs flex-shrink-0">
-                ⚠️
-              </div>
-              <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-rose-700 px-2.5 py-0.5 rounded-full bg-rose-50 border border-rose-200">
-                Urutan Alur Belum Tepat
-              </span>
-            </div>
-
-            {/* INDIKATOR PENGURANGAN SKOR */}
-            <div className="bg-rose-100 border border-rose-300 text-rose-700 text-[10px] sm:text-[11px] font-black px-3 py-0.5 rounded-full my-0.5">
-              📉 Pengurangan Skor: -10 PTS
-            </div>
-
-            {/* JUDUL PERIKSA */}
-            <h3 className="font-extrabold text-slate-900 text-xs sm:text-sm my-1 leading-snug">
-              Periksa Kembali Urutan Alur Anemia!
-            </h3>
-            
-            {/* PETUNJUK EDUKASI */}
-            <p className="text-slate-800 text-[10.5px] sm:text-[11.5px] bg-rose-50 rounded-xl p-2 sm:p-2.5 border border-rose-200 my-1 leading-relaxed text-left font-medium max-h-[35vh] overflow-y-auto">
-              💡 <b>Petunjuk:</b> Susun urutan mulai dari asupan makanan penyuplai zat besi (awal), habisnya cadangan besi di organ tubuh, penurunan kadar hemoglobin, hingga berkurangnya sel darah merah.
-            </p>
-            
-            {/* TOMBOL COBA LAGI */}
-            <button
-              onClick={() => setShowLevel2WrongModal(false)}
-              className="mt-1 w-full py-2 rounded-xl bg-rose-600 hover:bg-rose-700 active:scale-95 text-white font-black text-xs shadow transition-all cursor-pointer border border-rose-400"
-            >
-              Coba Susun Kembali
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* 3. PROTEKSI 1X MAIN (PENELITIAN) - POPUP TELAH MENYELESAIKAN MISI */}
-      {alreadyCompleted && phase !== 'completed' && (
-        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-          <div className="w-full max-w-sm bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 text-center shadow-2xl border-4 border-emerald-500 flex flex-col items-center animate-bounceIn my-auto">
-            <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mb-2 text-xl shadow-inner text-emerald-600 font-bold">
-              ✔
-            </div>
-            <h2 className="text-[#003049] font-black text-base sm:text-lg mb-1">
-              MISI LEVEL C TELAH SELESAI
-            </h2>
-            <p className="text-slate-600 text-xs mb-2 leading-relaxed">
-              Kamu sudah menyelesaikan Misi Game 3 (Level C) sebelumnya dengan perolehan:
-            </p>
-            <div className="bg-emerald-50 border-2 border-emerald-300 rounded-xl py-2 px-6 mb-2.5 w-full">
-              <span className="text-emerald-800 font-black text-2xl">
-                {existingScore} PTS
-              </span>
-            </div>
-            <p className="text-slate-500 text-[11px] mb-3 leading-tight">
-              Setiap misi hanya dapat diakses 1 kali percobaan karena data diperuntukkan bagi evaluasi penelitian.
-            </p>
-            <button
-              onClick={onBack}
-              className="w-full bg-[#003049] hover:bg-[#002233] text-white font-black py-2.5 px-4 rounded-xl shadow text-xs uppercase tracking-wider cursor-pointer active:scale-95 transition-all"
-            >
-              Kembali ke Menu Misi
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

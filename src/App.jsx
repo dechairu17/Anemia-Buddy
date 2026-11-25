@@ -114,6 +114,7 @@ function App() {
         <MisiHarian 
           level={1}
           onBack={() => setCurrentPage('game')}
+          onGoToLevel2={() => setCurrentPage('game_level_2')}
           onSelectMisi={(misiData) => {
             setSelectedMisiData(misiData)
             console.log('Misi terpilih Level 1:', misiData)
@@ -220,6 +221,7 @@ function App() {
         <MisiHarian 
           level={2}
           onBack={() => setCurrentPage('game')}
+          onGoToLevel1={() => setCurrentPage('game_level_1')}
           onSelectMisi={(misiData) => {
             setSelectedMisiData(misiData)
             console.log('Misi terpilih Level 2:', misiData)

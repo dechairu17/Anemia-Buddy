@@ -73,14 +73,14 @@ function NotificationBell() {
         <ellipse cx="44" cy="36" rx="3.5" ry="6" fill="#FFFFFF" opacity="0.75" transform="rotate(-18 44 36)" />
       </svg>
 
-      {/* Badge Angka Notifikasi Merah */}
+      {/* Badge Angka Notifikasi Merah (Lebih kecil dari bel & di kanan bawah menempel ke bel) */}
       <div 
-        className="absolute top-1 right-1 sm:top-2 sm:right-2 w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center border-2 border-white shadow-md select-none"
+        className="absolute -bottom-0.5 -right-0.5 sm:bottom-0 sm:right-0 w-4.5 h-4.5 sm:w-5 sm:h-5 rounded-full flex items-center justify-center border-[1.5px] border-white shadow-md select-none z-10"
         style={{
           background: 'radial-gradient(circle at 35% 35%, #FF4D6D, #D90429, #7F0010)'
         }}
       >
-        <span className="text-white font-black text-[11px] sm:text-xs md:text-sm leading-none drop-shadow-xs">
+        <span className="text-white font-black text-[9px] sm:text-[10px] leading-none drop-shadow-xs">
           1
         </span>
       </div>
@@ -210,6 +210,8 @@ function Day1LevelA({ onBack, onComplete }) {
   // SIMPAN SKOR SESUAI SKEMA SUPABASE: username, kategori_game, skor, durasi_detik
   const saveScoreToSupabase = async (finalScore = earnedScore) => {
     try {
+      localStorage.setItem('misi_h1_a_completed', 'true')
+      localStorage.setItem('misi_h1_a_score', finalScore.toString())
       const durationSeconds = Math.max(1, Math.round((Date.now() - startTimeRef.current) / 1000))
       await supabase.from('game_scores').insert([
         {
@@ -582,17 +584,16 @@ function Day1LevelA({ onBack, onComplete }) {
           FASE 3: POPUP MENANG / SELESAI (RESPONSIF LANDSCAPE HP)
          ========================================================================= */}
       {gameState === 'completed' && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex flex-col items-center justify-start sm:justify-center p-2 sm:p-4 overflow-y-auto overscroll-contain py-4">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-y-auto overscroll-contain py-3 sm:py-6">
           <div className="relative bg-white rounded-2xl sm:rounded-3xl p-3 sm:p-5 max-w-sm sm:max-w-md w-full text-center shadow-2xl border-4 border-amber-400 flex flex-col items-center animate-in fade-in zoom-in duration-300 max-h-[92dvh] overflow-y-auto custom-scrollbar my-auto">
-            
-            {/* TOMBOL TUTUP CEPAT */}
+            {/* TOMBOL TUTUP / KELUAR CEPAT */}
             <button
               onClick={() => {
-                onComplete && onComplete({ score: earnedScore, missionId: 'misi_h1_a' })
+                playSound('click')
                 onBack && onBack()
               }}
-              className="absolute top-2.5 right-2.5 sm:top-3.5 sm:right-3.5 z-20 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-100 hover:bg-rose-50 text-slate-500 hover:text-rose-600 font-black text-xs sm:text-sm flex items-center justify-center shadow-sm border border-slate-200 transition-all cursor-pointer active:scale-90"
-              title="Kembali ke Menu Misi"
+              className="absolute top-2.5 right-2.5 sm:top-3 sm:right-3 w-7 h-7 rounded-full bg-slate-100 hover:bg-rose-500 text-slate-500 hover:text-white font-black text-xs flex items-center justify-center shadow transition-all active:scale-90 cursor-pointer border border-slate-300 z-10"
+              title="Keluar"
             >
               ✕
             </button>
@@ -625,7 +626,7 @@ function Day1LevelA({ onBack, onComplete }) {
               </div>
             </div>
 
-            <div className="w-full flex flex-col gap-1.5 flex-shrink-0">
+            <div className="w-full flex-shrink-0 flex flex-col gap-2">
               <button
                 onClick={() => {
                   playSound('click')
@@ -633,7 +634,7 @@ function Day1LevelA({ onBack, onComplete }) {
                 }}
                 className="w-full bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black py-2.5 px-4 rounded-full shadow-lg hover:shadow-xl transition-all active:scale-95 cursor-pointer text-xs uppercase tracking-wider flex items-center justify-center gap-2 border border-amber-300"
               >
-                <span>Lanjut ke Game Misi B</span>
+                <span>Lanjut ke Game Selanjutnya: Misi B (Bantu Mia)</span>
                 <span className="text-sm font-black">➔</span>
               </button>
 
@@ -643,7 +644,7 @@ function Day1LevelA({ onBack, onComplete }) {
                   onComplete && onComplete({ score: earnedScore, missionId: 'misi_h1_a' })
                   onBack && onBack()
                 }}
-                className="w-full bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-extrabold py-2 px-4 rounded-full border border-slate-300 text-xs uppercase tracking-wider cursor-pointer transition-all flex items-center justify-center gap-1"
+                className="w-full bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-bold py-2 px-4 rounded-full text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5 border border-slate-300"
               >
                 <span>🏠 Menu Misi</span>
               </button>
