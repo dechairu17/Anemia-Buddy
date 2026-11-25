@@ -394,12 +394,40 @@ export default function Day2LevelC({ misiId = 'misi_h2_c', onBack, onComplete })
   }
 
   // MENGHITUNG MAKANAN YANG SUDAH DIPAKAI DI SEMUA SESI (PAGI, SIANG, MALAM)
-  // MAKANAN YANG SUDAH DIPAKAI AKAN HILANG DARI RAK LEMARI
   const allUsedFoodIds = [
     ...Object.values(dailyPlates.pagi).filter(Boolean).map((f) => f.id),
     ...Object.values(dailyPlates.siang).filter(Boolean).map((f) => f.id),
     ...Object.values(dailyPlates.malam).filter(Boolean).map((f) => f.id)
   ]
+
+  // HELPER: Distribusikan bahan makanan yang masih tersedia secara rapi ke 5 rak lemari (maks 2 makanan per rak)
+  const distributeFoodsToShelves = (foodList) => {
+    const shelves = [[], [], [], [], []]
+    if (!foodList || foodList.length === 0) return shelves
+
+    const n = Math.min(10, foodList.length)
+    const doubleCount = Math.max(0, n - 5) // rak yang terisi 2 makanan
+    const singleCount = n - (doubleCount * 2) // rak yang terisi 1 makanan
+
+    let itemIdx = 0
+    for (let s = 0; s < 5; s++) {
+      const capacity = s < doubleCount ? 2 : (s < doubleCount + singleCount ? 1 : 0)
+      for (let c = 0; c < capacity; c++) {
+        if (itemIdx < foodList.length) {
+          shelves[s].push(foodList[itemIdx++])
+        }
+      }
+    }
+    return shelves
+  }
+
+  // MAKANAN CADANGAN YANG MASIH TERSEDIA (BELUM DIMASUKKAN KE SEKAT PIRING)
+  const availableLeftFoods = shuffledLeftFoods.filter((f) => !allUsedFoodIds.includes(f.id))
+  const availableRightFoods = shuffledRightFoods.filter((f) => !allUsedFoodIds.includes(f.id))
+
+  // ISI RAK LEMARI SECARA DINAMIS: RAK YANG KOSONG LANGSUNG DIISI OTOMATIS OLEH BAHAN CADANGAN
+  const leftShelves = distributeFoodsToShelves(availableLeftFoods)
+  const rightShelves = distributeFoodsToShelves(availableRightFoods)
 
   // PERHITUNGAN NILAI:
   // (100 / 3) / 5 = 100 / 15 point per slot benar (3 sesi x 5 variabel = 15 total slot = 100 PTS max)
@@ -810,22 +838,15 @@ export default function Day2LevelC({ misiId = 'misi_h2_c', onBack, onComplete })
             }}
           >
             {[0, 1, 2, 3, 4].map((shelfIdx) => {
-              const shelfFoods = shuffledLeftFoods.slice(shelfIdx * 2, shelfIdx * 2 + 2)
+              const shelfFoods = leftShelves[shelfIdx] || []
               return (
                 <div
                   key={`left-shelf-${shelfIdx}`}
-                  className="w-full h-[20%] flex items-end justify-between px-[12%] pb-[3.5%]"
+                  className={`w-full h-[20%] flex items-end ${
+                    shelfFoods.length === 1 ? 'justify-center' : 'justify-between'
+                  } px-[12%] pb-[3.5%]`}
                 >
                   {shelfFoods.map((food) => {
-                    const isUsed = allUsedFoodIds.includes(food.id)
-                    if (isUsed) {
-                      return (
-                        <div
-                          key={food.id}
-                          className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-17 lg:h-17 pointer-events-none select-none invisible"
-                        />
-                      )
-                    }
                     const isShaking = shakingFoodId === food.id
                     return (
                       <button
@@ -1163,22 +1184,15 @@ export default function Day2LevelC({ misiId = 'misi_h2_c', onBack, onComplete })
             }}
           >
             {[0, 1, 2, 3, 4].map((shelfIdx) => {
-              const shelfFoods = shuffledRightFoods.slice(shelfIdx * 2, shelfIdx * 2 + 2)
+              const shelfFoods = rightShelves[shelfIdx] || []
               return (
                 <div
                   key={`right-shelf-${shelfIdx}`}
-                  className="w-full h-[20%] flex items-end justify-between px-[12%] pb-[3.5%]"
+                  className={`w-full h-[20%] flex items-end ${
+                    shelfFoods.length === 1 ? 'justify-center' : 'justify-between'
+                  } px-[12%] pb-[3.5%]`}
                 >
                   {shelfFoods.map((food) => {
-                    const isUsed = allUsedFoodIds.includes(food.id)
-                    if (isUsed) {
-                      return (
-                        <div
-                          key={food.id}
-                          className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-17 lg:h-17 pointer-events-none select-none invisible"
-                        />
-                      )
-                    }
                     const isShaking = shakingFoodId === food.id
                     return (
                       <button
