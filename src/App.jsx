@@ -15,6 +15,9 @@ import Day1LevelB from './components/game/Day1LevelB' // Komponen Game Day 1 Lev
 import Day1LevelC from './components/game/Day1LevelC' // Komponen Game Day 1 Level C / Game 3
 import Day1LevelD from './components/game/Day1LevelD' // Komponen Game Day 1 Level D / Game 4 (Evaluasi Sikap)
 import Day1LevelE from './components/game/Day1LevelE' // Komponen Game Day 1 Level E (Misi E Mandiri)
+import Day2LevelA from './components/game/Day2LevelA' // Komponen Game Day 2 Level A
+import Day2LevelB from './components/game/Day2LevelB' // Komponen Game Day 2 Level B
+import Day2LevelC from './components/game/Day2LevelC' // Komponen Game Day 2 Level C
 
 function App() {
   const [currentPage, setCurrentPage] = useState('login')
@@ -220,8 +223,58 @@ function App() {
           onSelectMisi={(misiData) => {
             setSelectedMisiData(misiData)
             console.log('Misi terpilih Level 2:', misiData)
-            // Lanjut ke gameplay spesifik Misi A/B/C/D/E jika komponen gameplay sudah siap:
-            // setCurrentPage(`play_misi_${misiData.misiKey.toLowerCase()}`)
+            if (misiData.misiKey === 'A') {
+              setCurrentPage('day2_level_a')
+            } else if (misiData.misiKey === 'B') {
+              setCurrentPage('day2_level_b')
+            } else if (misiData.misiKey === 'C') {
+              setCurrentPage('day2_level_c')
+            }
+          }}
+        />
+      )}
+
+      {/* MODUL GAMEPLAY DAY 2 LEVEL A */}
+      {currentPage === 'day2_level_a' && (
+        <Day2LevelA 
+          onBack={() => setCurrentPage('game_level_2')}
+          onComplete={(result) => {
+            console.log('Day 2 Level A Selesai:', result)
+            if (result?.nextMission) {
+              setCurrentPage(`day2_level_${result.nextMission.toLowerCase()}`)
+            } else {
+              setCurrentPage('game_level_2')
+            }
+          }}
+        />
+      )}
+
+      {/* MODUL GAMEPLAY DAY 2 LEVEL B */}
+      {currentPage === 'day2_level_b' && (
+        <Day2LevelB 
+          onBack={() => setCurrentPage('game_level_2')}
+          onComplete={(result) => {
+            console.log('Day 2 Level B Selesai:', result)
+            if (result?.nextMission) {
+              setCurrentPage(`day2_level_${result.nextMission.toLowerCase()}`)
+            } else {
+              setCurrentPage('game_level_2')
+            }
+          }}
+        />
+      )}
+
+      {/* MODUL GAMEPLAY DAY 2 LEVEL C */}
+      {currentPage === 'day2_level_c' && (
+        <Day2LevelC 
+          onBack={() => setCurrentPage('game_level_2')}
+          onComplete={(result) => {
+            console.log('Day 2 Level C Selesai:', result)
+            if (result?.nextMission) {
+              setCurrentPage(`day2_level_${result.nextMission.toLowerCase()}`)
+            } else {
+              setCurrentPage('game_level_2')
+            }
           }}
         />
       )}
