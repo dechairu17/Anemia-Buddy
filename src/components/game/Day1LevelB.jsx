@@ -23,7 +23,7 @@ export default function Day1LevelB({ onBack, onComplete, misiId = 'misi_h1_b' })
   // DATA PENGGUNA & SKOR
   const [gender, setGender] = useState('male')
   const [totalScore, setTotalScore] = useState(0)
-  const [earnedScore, setEarnedScore] = useState(25)
+  const [earnedScore, setEarnedScore] = useState(0)
   const [isEarlyExit, setIsEarlyExit] = useState(false)
   const [alreadyCompleted, setAlreadyCompleted] = useState(false)
   const [existingScore, setExistingScore] = useState(0)
@@ -149,7 +149,9 @@ export default function Day1LevelB({ onBack, onComplete, misiId = 'misi_h1_b' })
   // AKSI 8: Saya Sudah Paham (Lanjut ke pujian lalu skor akhir)
   const handlePaham = () => {
     playSound('cring')
-    saveScoreToDatabase(earnedScore)
+    const finalScore = Math.min(100, earnedScore + 25)
+    setEarnedScore(finalScore)
+    saveScoreToDatabase(finalScore)
     setStep('step8_pujian')
   }
 
@@ -221,6 +223,21 @@ export default function Day1LevelB({ onBack, onComplete, misiId = 'misi_h1_b' })
               Kamu telah menyelesaikan misi ini dengan skor <b>{existingScore} PTS</b>. Data evaluasi sikap telah tersimpan.
             </p>
             <div className="flex flex-col gap-2">
+              {existingScore < 100 && (
+                <button
+                  onClick={() => {
+                    playSound('click')
+                    setAlreadyCompleted(false)
+                    setEarnedScore(0)
+                    setStep('step1_prompt')
+                    setIsEarlyExit(false)
+                    setShowCompletionModal(false)
+                  }}
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-2 px-6 rounded-2xl shadow-md transition-all active:scale-95 text-xs sm:text-sm cursor-pointer"
+                >
+                  🔄 Ulangi Misi (Perbaiki Sikap &amp; Skor)
+                </button>
+              )}
               <button
                 onClick={() => {
                   playSound('click')
