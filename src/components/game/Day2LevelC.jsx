@@ -393,41 +393,28 @@ export default function Day2LevelC({ misiId = 'misi_h2_c', onBack, onComplete })
     setTouchDrag(null)
   }
 
-  // MENGHITUNG MAKANAN YANG SUDAH DIPAKAI DI SEMUA SESI (PAGI, SIANG, MALAM)
-  const allUsedFoodIds = [
-    ...Object.values(dailyPlates.pagi).filter(Boolean).map((f) => f.id),
-    ...Object.values(dailyPlates.siang).filter(Boolean).map((f) => f.id),
-    ...Object.values(dailyPlates.malam).filter(Boolean).map((f) => f.id)
+  // SESI AKTIF & PIRING AKTIF SAAT INI
+  const currentSessionKey = SESSIONS[sessionIndex]?.key || 'pagi'
+  const currentPlate = dailyPlates[currentSessionKey]
+  const currentPlateFoodIds = Object.values(currentPlate).filter(Boolean).map((f) => f.id)
+
+  // SETIAP LEMARI SELALU MENAMPILKAN PENUH 10 BAHAN MAKANAN (2 BAHAN PER RAK, 5 RAK = 10 BAHAN)
+  // TIDAK ADA RAK YANG KOSONG PADA SESI APAPUN (PAGI, SIANG, MALAM)
+  const leftShelves = [
+    shuffledLeftFoods.slice(0, 2),
+    shuffledLeftFoods.slice(2, 4),
+    shuffledLeftFoods.slice(4, 6),
+    shuffledLeftFoods.slice(6, 8),
+    shuffledLeftFoods.slice(8, 10),
   ]
 
-  // HELPER: Distribusikan bahan makanan yang masih tersedia secara rapi ke 5 rak lemari (maks 2 makanan per rak)
-  const distributeFoodsToShelves = (foodList) => {
-    const shelves = [[], [], [], [], []]
-    if (!foodList || foodList.length === 0) return shelves
-
-    const n = Math.min(10, foodList.length)
-    const doubleCount = Math.max(0, n - 5) // rak yang terisi 2 makanan
-    const singleCount = n - (doubleCount * 2) // rak yang terisi 1 makanan
-
-    let itemIdx = 0
-    for (let s = 0; s < 5; s++) {
-      const capacity = s < doubleCount ? 2 : (s < doubleCount + singleCount ? 1 : 0)
-      for (let c = 0; c < capacity; c++) {
-        if (itemIdx < foodList.length) {
-          shelves[s].push(foodList[itemIdx++])
-        }
-      }
-    }
-    return shelves
-  }
-
-  // MAKANAN CADANGAN YANG MASIH TERSEDIA (BELUM DIMASUKKAN KE SEKAT PIRING)
-  const availableLeftFoods = shuffledLeftFoods.filter((f) => !allUsedFoodIds.includes(f.id))
-  const availableRightFoods = shuffledRightFoods.filter((f) => !allUsedFoodIds.includes(f.id))
-
-  // ISI RAK LEMARI SECARA DINAMIS: RAK YANG KOSONG LANGSUNG DIISI OTOMATIS OLEH BAHAN CADANGAN
-  const leftShelves = distributeFoodsToShelves(availableLeftFoods)
-  const rightShelves = distributeFoodsToShelves(availableRightFoods)
+  const rightShelves = [
+    shuffledRightFoods.slice(0, 2),
+    shuffledRightFoods.slice(2, 4),
+    shuffledRightFoods.slice(4, 6),
+    shuffledRightFoods.slice(6, 8),
+    shuffledRightFoods.slice(8, 10),
+  ]
 
   // PERHITUNGAN NILAI:
   // (100 / 3) / 5 = 100 / 15 point per slot benar (3 sesi x 5 variabel = 15 total slot = 100 PTS max)
@@ -500,9 +487,6 @@ export default function Day2LevelC({ misiId = 'misi_h2_c', onBack, onComplete })
       startTimeRef.current = Date.now()
     }
   }, [stage])
-
-  const currentSessionKey = SESSIONS[sessionIndex]?.key || 'pagi'
-  const currentPlate = dailyPlates[currentSessionKey]
 
   // MENGHITUNG JUMLAH SLOT YANG TERISI (0/5 S/D 5/5)
   const filledCount = Object.values(currentPlate).filter(Boolean).length
@@ -842,12 +826,11 @@ export default function Day2LevelC({ misiId = 'misi_h2_c', onBack, onComplete })
               return (
                 <div
                   key={`left-shelf-${shelfIdx}`}
-                  className={`w-full h-[20%] flex items-end ${
-                    shelfFoods.length === 1 ? 'justify-center' : 'justify-between'
-                  } px-[12%] pb-[3.5%]`}
+                  className="w-full h-[20%] flex items-end justify-between px-[12%] pb-[3.5%]"
                 >
                   {shelfFoods.map((food) => {
                     const isShaking = shakingFoodId === food.id
+                    const isSelectedInPlate = currentPlateFoodIds.includes(food.id)
                     return (
                       <button
                         key={food.id}
@@ -864,20 +847,33 @@ export default function Day2LevelC({ misiId = 'misi_h2_c', onBack, onComplete })
                         onTouchStart={(e) => handleTouchStart(e, food)}
                         onTouchMove={handleTouchMove}
                         onTouchEnd={handleTouchEnd}
-                        onClick={() => handleSelectFood(food)}
+                        onClick={() => {
+                          if (isSelectedInPlate) {
+                            handleRemoveFromPlate(food.category)
+                          } else {
+                            handleSelectFood(food)
+                          }
+                        }}
                         className={`group relative flex items-center justify-center p-0 transition-transform cursor-grab active:cursor-grabbing focus:outline-none ${
                           isShaking
                             ? 'animate-bounce'
                             : 'hover:scale-115 active:scale-95'
                         }`}
-                        title={`Tarik atau ketuk untuk memasukkan ${food.name}`}
+                        title={isSelectedInPlate ? `${food.name} sudah di piring (ketuk untuk lepas)` : `Tarik atau ketuk untuk memasukkan ${food.name}`}
                       >
                         <img
                           src={food.img}
                           alt={food.name}
                           draggable={false}
-                          className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-17 lg:h-17 object-contain drop-shadow-md transition-all opacity-100 pointer-events-none"
+                          className={`w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-17 lg:h-17 object-contain drop-shadow-md transition-all pointer-events-none ${
+                            isSelectedInPlate ? 'opacity-40 filter grayscale-30 scale-95' : 'opacity-100'
+                          }`}
                         />
+                        {isSelectedInPlate && (
+                          <span className="absolute -top-1 -right-1 bg-emerald-500 text-white font-black text-[9px] sm:text-[10px] w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center shadow-md border-1.5 border-white">
+                            ✓
+                          </span>
+                        )}
                       </button>
                     )
                   })}
@@ -1188,12 +1184,11 @@ export default function Day2LevelC({ misiId = 'misi_h2_c', onBack, onComplete })
               return (
                 <div
                   key={`right-shelf-${shelfIdx}`}
-                  className={`w-full h-[20%] flex items-end ${
-                    shelfFoods.length === 1 ? 'justify-center' : 'justify-between'
-                  } px-[12%] pb-[3.5%]`}
+                  className="w-full h-[20%] flex items-end justify-between px-[12%] pb-[3.5%]"
                 >
                   {shelfFoods.map((food) => {
                     const isShaking = shakingFoodId === food.id
+                    const isSelectedInPlate = currentPlateFoodIds.includes(food.id)
                     return (
                       <button
                         key={food.id}
@@ -1210,20 +1205,33 @@ export default function Day2LevelC({ misiId = 'misi_h2_c', onBack, onComplete })
                         onTouchStart={(e) => handleTouchStart(e, food)}
                         onTouchMove={handleTouchMove}
                         onTouchEnd={handleTouchEnd}
-                        onClick={() => handleSelectFood(food)}
+                        onClick={() => {
+                          if (isSelectedInPlate) {
+                            handleRemoveFromPlate(food.category)
+                          } else {
+                            handleSelectFood(food)
+                          }
+                        }}
                         className={`group relative flex items-center justify-center p-0 transition-transform cursor-grab active:cursor-grabbing focus:outline-none ${
                           isShaking
                             ? 'animate-bounce'
                             : 'hover:scale-115 active:scale-95'
                         }`}
-                        title={`Tarik atau ketuk untuk memasukkan ${food.name}`}
+                        title={isSelectedInPlate ? `${food.name} sudah di piring (ketuk untuk lepas)` : `Tarik atau ketuk untuk memasukkan ${food.name}`}
                       >
                         <img
                           src={food.img}
                           alt={food.name}
                           draggable={false}
-                          className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-17 lg:h-17 object-contain drop-shadow-md transition-all opacity-100 pointer-events-none"
+                          className={`w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-17 lg:h-17 object-contain drop-shadow-md transition-all pointer-events-none ${
+                            isSelectedInPlate ? 'opacity-40 filter grayscale-30 scale-95' : 'opacity-100'
+                          }`}
                         />
+                        {isSelectedInPlate && (
+                          <span className="absolute -top-1 -right-1 bg-emerald-500 text-white font-black text-[9px] sm:text-[10px] w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center shadow-md border-1.5 border-white">
+                            ✓
+                          </span>
+                        )}
                       </button>
                     )
                   })}
