@@ -790,8 +790,20 @@ export default function Day2LevelA({ misiId = 'misi_h2_a', onBack, onComplete })
           TAHAP 4: POPUP SKOR AKHIR & EVALUASI (UKURAN PROPORSIONAL & RINGKAS)
          ===================================================================== */}
       {phase === 4 && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
-          <div className="bg-slate-900/95 border-2 border-amber-400/80 rounded-2xl sm:rounded-3xl max-w-xs sm:max-w-sm w-full p-4 sm:p-5 text-center shadow-2xl animate-scaleUp my-auto max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-start sm:justify-center p-2 sm:p-4 overflow-y-auto overscroll-contain py-4 animate-fade-in">
+          <div className="relative bg-slate-900/95 border-2 border-amber-400/80 rounded-2xl sm:rounded-3xl max-w-xs sm:max-w-sm w-full p-4 sm:p-5 text-center shadow-2xl animate-scaleUp my-auto max-h-[92dvh] overflow-y-auto custom-scrollbar">
+            
+            {/* TOMBOL TUTUP / KEMBALI */}
+            <button
+              onClick={() => {
+                playSound('click')
+                onBack && onBack()
+              }}
+              className="absolute top-2.5 right-2.5 z-20 w-7 h-7 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs flex items-center justify-center cursor-pointer transition-all active:scale-90 border border-slate-700"
+              title="Kembali ke Menu"
+            >
+              ✕
+            </button>
             
             <div className="w-11 h-11 sm:w-12 sm:h-12 bg-amber-500/20 border-2 border-amber-400 rounded-full flex items-center justify-center text-2xl mx-auto mb-1.5 shadow-inner">
               🏆

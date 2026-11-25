@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { supabase } from '../../lib/supabase'
 import { playSound } from '../../utils/audio'
+import ScoreRaceLeaderboardModal from './ScoreRaceLeaderboardModal'
 
 // ASET GAMBAR UTAMA GAME C DAY 2
 import bgImg from '../../assets/15 day 2C/background 2c.png'
@@ -319,6 +320,7 @@ export default function Day2LevelC({ misiId = 'misi_h2_c', onBack, onComplete })
 
   // MODAL SESI SELESAI (POPUP REVIEW SETELAH KLIK "SELESAI" PADA SESI PAGI & SIANG)
   const [sessionReviewModal, setSessionReviewModal] = useState(null)
+  const [showLeaderboard, setShowLeaderboard] = useState(false)
 
   // TOAST DAN MODAL MATERI BANTUAN
   const [toastMsg, setToastMsg] = useState('')
@@ -1223,8 +1225,17 @@ export default function Day2LevelC({ misiId = 'misi_h2_c', onBack, onComplete })
           MODAL EVALUASI SESI MAKAN (PAGI / SIANG / MALAM)
           ===================================================================== */}
       {sessionReviewModal && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 animate-fade-in">
-          <div className="bg-[#1c0a0e] text-white border-2 border-amber-500/80 rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl flex flex-col items-center text-center">
+        <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm flex flex-col items-center justify-start sm:justify-center p-2 sm:p-4 overflow-y-auto overscroll-contain py-4 animate-fade-in">
+          <div className="relative bg-[#1c0a0e] text-white border-2 border-amber-500/80 rounded-3xl max-w-md w-full p-4 sm:p-5 shadow-2xl flex flex-col items-center text-center max-h-[92dvh] overflow-y-auto custom-scrollbar my-auto">
+            {/* TOMBOL TUTUP / LANJUT */}
+            <button
+              onClick={handleProceedNextSession}
+              className="absolute top-2.5 right-2.5 z-20 w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-slate-300 font-bold text-xs flex items-center justify-center cursor-pointer transition-all active:scale-90"
+              title="Lanjut"
+            >
+              ✕
+            </button>
+
             <div className="text-3xl mb-1">{sessionReviewModal.sessionIcon}</div>
             <h3 className="text-amber-400 font-black text-base sm:text-lg mb-1">
               Menu {sessionReviewModal.sessionTitle} Berhasil Disusun!
@@ -1287,9 +1298,21 @@ export default function Day2LevelC({ misiId = 'misi_h2_c', onBack, onComplete })
           TAHAP 4: LAYAR HASIL AKHIR & KEMENANGAN (VICTORY SEHARI PENUH)
           ===================================================================== */}
       {stage === 4 && (
-        <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-3 animate-fade-in">
-          <div className="bg-[#1c0a0e] text-white border-2 border-amber-400/80 rounded-3xl max-w-lg w-full p-5 sm:p-6 shadow-2xl flex flex-col items-center text-center max-h-[94vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm flex flex-col items-center justify-start sm:justify-center p-2 sm:p-4 overflow-y-auto overscroll-contain py-4 animate-fade-in">
+          <div className="relative bg-[#1c0a0e] text-white border-2 border-amber-400/80 rounded-3xl max-w-lg w-full p-4 sm:p-6 shadow-2xl flex flex-col items-center text-center max-h-[92dvh] overflow-y-auto custom-scrollbar my-auto">
             
+            {/* TOMBOL TUTUP / KEMBALI */}
+            <button
+              onClick={() => {
+                playSound('click')
+                onBack && onBack()
+              }}
+              className="absolute top-2.5 right-2.5 sm:top-3.5 sm:right-3.5 z-20 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/10 hover:bg-white/20 text-slate-300 font-bold text-xs flex items-center justify-center cursor-pointer transition-all active:scale-90"
+              title="Kembali ke Menu"
+            >
+              ✕
+            </button>
+
             <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-amber-500 to-yellow-300 flex items-center justify-center text-3xl shadow-lg mb-2">
               🏆
             </div>
@@ -1364,8 +1387,19 @@ export default function Day2LevelC({ misiId = 'misi_h2_c', onBack, onComplete })
               </div>
             </div>
 
-            {/* TOMBOL SELESAI MISI HARI 2 & KEMBALI */}
+            {/* TOMBOL SELESAI MISI HARI 2 & BALAPAN SKOR */}
             <div className="w-full flex flex-col gap-2">
+              <button
+                onClick={() => {
+                  playSound('click')
+                  setShowLeaderboard(true)
+                }}
+                className="w-full py-2.5 rounded-full bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:from-amber-400 text-slate-950 font-black text-xs sm:text-sm shadow-xl transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-2 border border-amber-300"
+              >
+                <span>🏁 Lihat Balapan Skor Hari 2</span>
+                <span className="text-base font-black">➔</span>
+              </button>
+
               <button
                 onClick={() => {
                   playSound('click')
@@ -1376,7 +1410,7 @@ export default function Day2LevelC({ misiId = 'misi_h2_c', onBack, onComplete })
                       nextMission: null
                     })
                 }}
-                className="w-full py-2.5 rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 text-slate-950 font-black text-xs sm:text-sm shadow-xl transition-all active:scale-95 cursor-pointer"
+                className="w-full py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs sm:text-sm shadow-md transition-all active:scale-95 cursor-pointer"
               >
                 🎉 Misi Hari 2 Selesai! Kembali ke Menu Misi ➔
               </button>
@@ -1386,7 +1420,7 @@ export default function Day2LevelC({ misiId = 'misi_h2_c', onBack, onComplete })
                   playSound('click')
                   onBack && onBack()
                 }}
-                className="w-full py-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-slate-200 font-bold text-xs transition-all active:scale-95 cursor-pointer"
+                className="w-full py-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-slate-200 font-bold text-xs transition-all active:scale-95 cursor-pointer"
               >
                 Kembali ke Menu Misi
               </button>
@@ -1395,6 +1429,36 @@ export default function Day2LevelC({ misiId = 'misi_h2_c', onBack, onComplete })
           </div>
         </div>
       )}
+
+      {/* MODAL BALAPAN SKOR / LEADERBOARD HARI 2 */}
+      <ScoreRaceLeaderboardModal
+        isOpen={showLeaderboard}
+        currentMissionId="misi_h2_c"
+        currentMissionTitle="Misi C Hari 2: Isi Piringku"
+        currentScore={currentScore}
+        nextMissionKey={null}
+        nextMissionTitle="Selesai Misi Hari 2"
+        onNext={() => {
+          setShowLeaderboard(false)
+          onComplete &&
+            onComplete({
+              score: currentScore,
+              missionId: misiId,
+              nextMission: null
+            })
+          onBack && onBack()
+        }}
+        onBackToMenu={() => {
+          setShowLeaderboard(false)
+          onComplete &&
+            onComplete({
+              score: currentScore,
+              missionId: misiId,
+              nextMission: null
+            })
+          onBack && onBack()
+        }}
+      />
 
       {/* =====================================================================
           PROTEKSI 1X PERCOBAAN (JIKA SUDAH SELESAI SEBELUMNYA)

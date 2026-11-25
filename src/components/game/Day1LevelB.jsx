@@ -8,7 +8,6 @@ import bgProfilWanita from '../../assets/6/game home - profil wanita_crop.png'
 
 // AUDIO SYNTHESIZER UNTUK SOUND EFFECT REAL-TIME
 import { playSound } from '../../utils/audio'
-import ScoreRaceLeaderboardModal from './ScoreRaceLeaderboardModal'
 
 // -----------------------------------------------------------------------------
 // DATA SKENARIO PENELITIAN: SIKAP MENGHARGAI (PENYEBAB) & BERTANGGUNG JAWAB (GEJALA)
@@ -201,7 +200,6 @@ export default function Day1LevelB({ onBack, onComplete, misiId = 'misi_h1_b' })
   // STATE PROTEKSI PENELITIAN (1X MAIN)
   const [alreadyCompleted, setAlreadyCompleted] = useState(false)
   const [existingScore, setExistingScore] = useState(0)
-  const [showLeaderboard, setShowLeaderboard] = useState(false)
 
   const username = localStorage.getItem('anemia_username') || 'Siswa'
   const startTimeRef = useRef(Date.now())
@@ -622,17 +620,27 @@ export default function Day1LevelB({ onBack, onComplete, misiId = 'misi_h1_b' })
               </p>
             </div>
 
-            {/* TOMBOL AKSI: BUKA LEADERBOARD */}
-            <div className="w-full flex items-center justify-center mt-1 pt-1 border-t border-slate-200">
+            {/* TOMBOL AKSI: LANJUT KE MISI C & KEMBALI */}
+            <div className="w-full flex flex-col gap-1.5 items-center justify-center mt-1 pt-1.5 border-t border-slate-200">
               <button
                 onClick={() => {
                   playSound('click')
-                  setShowLeaderboard(true)
+                  onComplete && onComplete({ score: totalEarnedScore, missionId: 'misi_h1_b', nextMission: 'c' })
                 }}
                 className="w-full max-w-sm py-2 rounded-xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:from-amber-400 hover:to-yellow-300 active:scale-95 text-slate-950 font-black text-xs sm:text-sm shadow-lg transition-all cursor-pointer border border-amber-300 flex items-center justify-center gap-2"
               >
-                <span>Lanjut (Lihat Balapan Skor 🏁)</span>
+                <span>Lanjut ke Game Misi C</span>
                 <span className="text-base font-black">➔</span>
+              </button>
+              <button
+                onClick={() => {
+                  playSound('click')
+                  onComplete && onComplete({ score: totalEarnedScore, missionId: 'misi_h1_b' })
+                  onBack && onBack()
+                }}
+                className="w-full max-w-sm py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs border border-slate-300 transition-all cursor-pointer active:scale-95"
+              >
+                🏠 Kembali ke Menu Misi
               </button>
             </div>
           </div>
@@ -729,23 +737,6 @@ export default function Day1LevelB({ onBack, onComplete, misiId = 'misi_h1_b' })
           </div>
         </div>
       )}
-
-      {/* MODAL BALAPAN SKOR / LEADERBOARD */}
-      <ScoreRaceLeaderboardModal
-        isOpen={showLeaderboard}
-        currentMissionId="misi_h1_b"
-        currentMissionTitle="Misi B: Evaluasi Sikap"
-        currentScore={totalEarnedScore}
-        nextMissionKey="C"
-        nextMissionTitle="Misi C (Fakta vs Mitos)"
-        onNext={() => {
-          onComplete && onComplete({ score: totalEarnedScore, missionId: 'misi_h1_b', nextMission: 'c' })
-        }}
-        onBackToMenu={() => {
-          onComplete && onComplete({ score: totalEarnedScore, missionId: 'misi_h1_b' })
-          onBack && onBack()
-        }}
-      />
     </div>  
   )
 }

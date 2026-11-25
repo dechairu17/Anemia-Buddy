@@ -11,7 +11,6 @@ import imgPenyebab from '../../assets/3/3. materi - penyebab.png'
 
 // AUDIO SYNTHESIZER UNTUK SOUND EFFECT REAL-TIME
 import { playSound } from '../../utils/audio'
-import ScoreRaceLeaderboardModal from './ScoreRaceLeaderboardModal'
 
 // IMPORT ASET TONG SAMPAH FAKTA & MITOS
 import tongFaktaImg from '../../assets/8. day 1 level C/tong fakta.png'
@@ -144,7 +143,6 @@ export default function Day1LevelC({ onBack, onComplete, misiId = 'misi_h1_c' })
   const [level2Validation, setLevel2Validation] = useState(null) // null | 'correct' | 'wrong'
   const [level2Mistakes, setLevel2Mistakes] = useState(0)
   const [showLevel2WrongModal, setShowLevel2WrongModal] = useState(false)
-  const [showLeaderboard, setShowLeaderboard] = useState(false)
 
   const username = localStorage.getItem('anemia_username') || 'Siswa'
   const startTimeRef = useRef(Date.now())
@@ -1216,17 +1214,27 @@ export default function Day1LevelC({ onBack, onComplete, misiId = 'misi_h1_c' })
               </div>
             </div>
 
-            {/* TOMBOL AKSI: SELESAI & SIMPAN SKOR (LANJUT KE BALAPAN LEADERBOARD) */}
-            <div className="w-full flex items-center justify-center mt-1 pt-1.5 border-t border-slate-200">
+            {/* TOMBOL AKSI: LANJUT KE MISI D & KEMBALI */}
+            <div className="w-full flex flex-col gap-1.5 items-center justify-center mt-1 pt-1.5 border-t border-slate-200">
               <button
                 onClick={() => {
                   playSound('click')
-                  setShowLeaderboard(true)
+                  onComplete && onComplete({ score: earnedScore, missionId: 'misi_h1_c', nextMission: 'd' })
                 }}
                 className="w-full max-w-sm py-2 sm:py-2.5 rounded-xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:from-amber-400 hover:to-yellow-300 active:scale-95 text-slate-950 font-black text-xs sm:text-sm shadow-lg transition-all cursor-pointer border border-amber-300 flex items-center justify-center gap-2"
               >
-                <span>Lanjut (Lihat Balapan Skor 🏁)</span>
+                <span>Lanjut ke Game Misi D</span>
                 <span className="text-base font-black">➔</span>
+              </button>
+              <button
+                onClick={() => {
+                  playSound('click')
+                  onComplete && onComplete({ score: earnedScore, missionId: 'misi_h1_c' })
+                  onBack && onBack()
+                }}
+                className="w-full max-w-sm py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs border border-slate-300 transition-all cursor-pointer active:scale-95"
+              >
+                🏠 Kembali ke Menu Misi
               </button>
             </div>
 
@@ -1349,23 +1357,6 @@ export default function Day1LevelC({ onBack, onComplete, misiId = 'misi_h1_c' })
           </div>
         </div>
       )}
-
-      {/* MODAL BALAPAN SKOR / LEADERBOARD */}
-      <ScoreRaceLeaderboardModal
-        isOpen={showLeaderboard}
-        currentMissionId="misi_h1_c"
-        currentMissionTitle="Misi C: Melawan Anemia"
-        currentScore={earnedScore}
-        nextMissionKey="D"
-        nextMissionTitle="Misi D (Detektif Gejala)"
-        onNext={() => {
-          onComplete && onComplete({ score: earnedScore, missionId: 'misi_h1_c', nextMission: 'd' })
-        }}
-        onBackToMenu={() => {
-          onComplete && onComplete({ score: earnedScore, missionId: 'misi_h1_c' })
-          onBack && onBack()
-        }}
-      />
     </div>
   )
 }

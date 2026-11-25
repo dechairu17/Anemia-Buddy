@@ -6,7 +6,6 @@ import bgDay1A from '../../assets/8. day 1 level A/8 BACKGROUND .png'
 import cardBackImg from '../../assets/8. day 1 level A/46.png'
 import mascotImg from '../../assets/9. day 1 level B/karakter.png'
 import { playSound } from '../../utils/audio'
-import ScoreRaceLeaderboardModal from './ScoreRaceLeaderboardModal'
 
 // KOMPONEN LONCENG 3D NOTIFIKASI
 function NotificationBell() {
@@ -143,7 +142,6 @@ function Day1LevelA({ onBack, onComplete }) {
 
   // Jeda 10 detik membaca kartu setelah semua flip terbuka
   const [readingCountdown, setReadingCountdown] = useState(null)
-  const [showLeaderboard, setShowLeaderboard] = useState(false)
 
   // Durasi pengerjaan
   const startTimeRef = useRef(Date.now())
@@ -584,8 +582,21 @@ function Day1LevelA({ onBack, onComplete }) {
           FASE 3: POPUP MENANG / SELESAI (RESPONSIF LANDSCAPE HP)
          ========================================================================= */}
       {gameState === 'completed' && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
-          <div className="bg-white rounded-2xl sm:rounded-3xl p-3 sm:p-5 max-w-sm sm:max-w-md w-full text-center shadow-2xl border-4 border-amber-400 flex flex-col items-center animate-in fade-in zoom-in duration-300 max-h-[92dvh] overflow-y-auto custom-scrollbar my-auto">
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex flex-col items-center justify-start sm:justify-center p-2 sm:p-4 overflow-y-auto overscroll-contain py-4">
+          <div className="relative bg-white rounded-2xl sm:rounded-3xl p-3 sm:p-5 max-w-sm sm:max-w-md w-full text-center shadow-2xl border-4 border-amber-400 flex flex-col items-center animate-in fade-in zoom-in duration-300 max-h-[92dvh] overflow-y-auto custom-scrollbar my-auto">
+            
+            {/* TOMBOL TUTUP CEPAT */}
+            <button
+              onClick={() => {
+                onComplete && onComplete({ score: earnedScore, missionId: 'misi_h1_a' })
+                onBack && onBack()
+              }}
+              className="absolute top-2.5 right-2.5 sm:top-3.5 sm:right-3.5 z-20 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-100 hover:bg-rose-50 text-slate-500 hover:text-rose-600 font-black text-xs sm:text-sm flex items-center justify-center shadow-sm border border-slate-200 transition-all cursor-pointer active:scale-90"
+              title="Kembali ke Menu Misi"
+            >
+              ✕
+            </button>
+
             <div className="w-10 h-10 sm:w-14 sm:h-14 bg-amber-100 rounded-full flex items-center justify-center mb-1 text-xl sm:text-2xl shadow-inner flex-shrink-0">
               🏆
             </div>
@@ -614,35 +625,32 @@ function Day1LevelA({ onBack, onComplete }) {
               </div>
             </div>
 
-            <div className="w-full flex-shrink-0">
+            <div className="w-full flex flex-col gap-1.5 flex-shrink-0">
               <button
-                onClick={() => setShowLeaderboard(true)}
+                onClick={() => {
+                  playSound('click')
+                  onComplete && onComplete({ score: earnedScore, missionId: 'misi_h1_a', nextMission: 'b' })
+                }}
                 className="w-full bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black py-2.5 px-4 rounded-full shadow-lg hover:shadow-xl transition-all active:scale-95 cursor-pointer text-xs uppercase tracking-wider flex items-center justify-center gap-2 border border-amber-300"
               >
-                <span>Lanjut (Lihat Balapan Skor 🏁)</span>
+                <span>Lanjut ke Game Misi B</span>
                 <span className="text-sm font-black">➔</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  playSound('click')
+                  onComplete && onComplete({ score: earnedScore, missionId: 'misi_h1_a' })
+                  onBack && onBack()
+                }}
+                className="w-full bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-extrabold py-2 px-4 rounded-full border border-slate-300 text-xs uppercase tracking-wider cursor-pointer transition-all flex items-center justify-center gap-1"
+              >
+                <span>🏠 Menu Misi</span>
               </button>
             </div>
           </div>
         </div>
       )}
-
-      {/* MODAL BALAPAN SKOR / LEADERBOARD */}
-      <ScoreRaceLeaderboardModal
-        isOpen={showLeaderboard}
-        currentMissionId="misi_h1_a"
-        currentMissionTitle="Misi A: Memori Kartu"
-        currentScore={earnedScore}
-        nextMissionKey="B"
-        nextMissionTitle="Misi B (Evaluasi Sikap)"
-        onNext={() => {
-          onComplete && onComplete({ score: earnedScore, missionId: 'misi_h1_a', nextMission: 'b' })
-        }}
-        onBackToMenu={() => {
-          onComplete && onComplete({ score: earnedScore, missionId: 'misi_h1_a' })
-          onBack && onBack()
-        }}
-      />
 
     </div>
   )

@@ -772,8 +772,20 @@ export default function Day2LevelB({ misiId = 'misi_h2_b', onBack, onComplete })
 
         {/* TAHAP 6: MODAL HASIL SELESAI MISI */}
         {stage === 6 && (
-          <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-3 animate-fade-in">
-            <div className="relative max-w-sm sm:max-w-md w-full bg-[#003049] text-white rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 shadow-2xl border-2 border-amber-400/50 flex flex-col items-center text-center max-h-[92vh] overflow-y-auto">
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-start sm:justify-center p-2 sm:p-4 overflow-y-auto overscroll-contain py-4 animate-fade-in">
+            <div className="relative max-w-sm sm:max-w-md w-full bg-[#003049] text-white rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 shadow-2xl border-2 border-amber-400/50 flex flex-col items-center text-center max-h-[92dvh] overflow-y-auto custom-scrollbar my-auto">
+              
+              {/* TOMBOL TUTUP / KEMBALI */}
+              <button
+                onClick={() => {
+                  playSound('click')
+                  onBack && onBack()
+                }}
+                className="absolute top-2.5 right-2.5 z-20 w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-slate-300 font-bold text-xs flex items-center justify-center cursor-pointer transition-all active:scale-90"
+                title="Kembali ke Menu"
+              >
+                ✕
+              </button>
               <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-tr from-amber-500 to-yellow-300 flex items-center justify-center text-xl sm:text-2xl shadow-lg mb-1">
                 🏆
               </div>

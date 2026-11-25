@@ -216,15 +216,28 @@ export default function Day1LevelE({ onBack, onComplete, misiId = 'misi_h1_e' })
         )}
 
         {stage === 'completed' && (
-          <div className="w-full max-w-sm bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 text-center shadow-2xl border-4 border-purple-500 flex flex-col items-center animate-bounceIn my-auto">
-            <div className="w-14 h-14 bg-amber-100 rounded-full flex items-center justify-center mb-2 text-2xl shadow-inner">
+          <div className="relative w-full max-w-sm bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 text-center shadow-2xl border-4 border-purple-500 flex flex-col items-center animate-bounceIn my-auto max-h-[92dvh] overflow-y-auto custom-scrollbar">
+            {/* TOMBOL TUTUP / KEMBALI */}
+            <button
+              onClick={() => {
+                playSound('click')
+                onComplete && onComplete({ score: earnedScore, missionId: 'misi_h1_e' })
+                onBack && onBack()
+              }}
+              className="absolute top-2.5 right-2.5 z-20 w-7 h-7 rounded-full bg-slate-100 hover:bg-rose-50 text-slate-500 hover:text-rose-600 font-black text-xs flex items-center justify-center shadow-sm border border-slate-200 transition-all cursor-pointer active:scale-90"
+              title="Kembali ke Menu Misi"
+            >
+              ✕
+            </button>
+
+            <div className="w-14 h-14 bg-amber-100 rounded-full flex items-center justify-center mb-2 text-2xl shadow-inner flex-shrink-0">
               🏆
             </div>
             <h2 className="text-[#1E1B4B] font-black text-base sm:text-lg mb-0.5 uppercase">
               MISI LEVEL E SELESAI!
             </h2>
             <p className="text-slate-600 text-xs mb-2">
-              Selamat! Kamu telah berhasil menuntaskan tantangan Misi Level E.
+              Selamat! Kamu telah berhasil menuntaskan seluruh tantangan Hari 1.
             </p>
 
             <div className="bg-purple-50 border-2 border-purple-300 rounded-xl py-2 px-6 mb-3 w-full">
@@ -233,16 +246,29 @@ export default function Day1LevelE({ onBack, onComplete, misiId = 'misi_h1_e' })
               </span>
             </div>
 
-            <button
-              onClick={() => {
-                playSound('click')
-                setShowLeaderboard(true)
-              }}
-              className="w-full bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:from-amber-400 hover:to-yellow-300 active:scale-95 text-slate-950 font-black py-2.5 px-4 rounded-xl shadow-lg text-xs uppercase tracking-wider cursor-pointer transition-all flex items-center justify-center gap-2 border border-amber-300"
-            >
-              <span>Lanjut (Lihat Balapan Skor 🏁)</span>
-              <span className="text-sm font-black">➔</span>
-            </button>
+            <div className="w-full flex flex-col gap-1.5 flex-shrink-0">
+              <button
+                onClick={() => {
+                  playSound('click')
+                  setShowLeaderboard(true)
+                }}
+                className="w-full bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:from-amber-400 hover:to-yellow-300 active:scale-95 text-slate-950 font-black py-2.5 px-4 rounded-xl shadow-lg text-xs uppercase tracking-wider cursor-pointer transition-all flex items-center justify-center gap-2 border border-amber-300"
+              >
+                <span>Lanjut (Lihat Balapan Skor 🏁)</span>
+                <span className="text-sm font-black">➔</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  playSound('click')
+                  onComplete && onComplete({ score: earnedScore, missionId: 'misi_h1_e' })
+                  onBack && onBack()
+                }}
+                className="w-full bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-extrabold py-2 px-4 rounded-xl border border-slate-300 text-xs uppercase tracking-wider cursor-pointer transition-all flex items-center justify-center gap-1"
+              >
+                <span>🏠 Selesai &amp; Menu Misi</span>
+              </button>
+            </div>
           </div>
         )}
       </div>

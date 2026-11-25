@@ -24,7 +24,6 @@ import lelahCircleImg from '../../assets/9. day 1 level B/mudah_lelah_circle.png
 
 // AUDIO SYNTHESIZER UNTUK SOUND EFFECT
 import { playSound } from '../../utils/audio'
-import ScoreRaceLeaderboardModal from './ScoreRaceLeaderboardModal'
 
 const playAudioFeedback = (type) => playSound(type)
 
@@ -157,7 +156,6 @@ export default function Day1LevelD({ onBack, onComplete, misiId = 'misi_h1_d' })
 
   // STATE POPUP & SUBMISI
   const [showScoreModal, setShowScoreModal] = useState(false)
-  const [showLeaderboard, setShowLeaderboard] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
 
   // TAHAP 1: IDENTIFIKASI GEJALA
@@ -556,13 +554,28 @@ export default function Day1LevelD({ onBack, onComplete, misiId = 'misi_h1_d' })
                   <span>SUBMIT ANALISIS DETEKTIF</span>
                 </button>
               ) : (
-                <button
-                  onClick={() => setShowLeaderboard(true)}
-                  className="w-full py-2.5 rounded-full bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:from-amber-400 hover:to-yellow-300 active:scale-95 text-slate-950 font-black text-xs sm:text-sm shadow-lg transition-all cursor-pointer flex items-center justify-center gap-2 border border-amber-300"
-                >
-                  <span>Lanjut (Lihat Balapan Skor 🏁)</span>
-                  <span className="text-base font-black">➔</span>
-                </button>
+                <div className="w-full flex items-center justify-center gap-2">
+                  <button
+                    onClick={() => {
+                      playAudioFeedback('click')
+                      onComplete && onComplete({ score: earnedScore, missionId: 'misi_h1_d', nextMission: 'e' })
+                    }}
+                    className="flex-1 max-w-sm py-2.5 rounded-full bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:from-amber-400 hover:to-yellow-300 active:scale-95 text-slate-950 font-black text-xs sm:text-sm shadow-lg transition-all cursor-pointer flex items-center justify-center gap-2 border border-amber-300"
+                  >
+                    <span>Lanjut ke Game Misi E</span>
+                    <span className="text-base font-black">➔</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      playAudioFeedback('click')
+                      onComplete && onComplete({ score: earnedScore, missionId: 'misi_h1_d' })
+                      onBack && onBack()
+                    }}
+                    className="px-4 py-2.5 rounded-full bg-white/20 hover:bg-white/30 text-white font-bold text-xs border border-white/30 transition-all cursor-pointer active:scale-95"
+                  >
+                    Menu Misi
+                  </button>
+                </div>
               )}
             </div>
 
@@ -573,8 +586,18 @@ export default function Day1LevelD({ onBack, onComplete, misiId = 'misi_h1_d' })
             POPUP HASIL SKOR DETEKTIF
            ========================================================================= */}
         {showScoreModal && (
-          <div className="absolute inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
-            <div className="bg-white rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 max-w-sm sm:max-w-md w-full text-center shadow-2xl border-4 border-amber-400 flex flex-col items-center animate-in zoom-in duration-200 max-h-[92dvh] overflow-y-auto custom-scrollbar my-auto">
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex flex-col items-center justify-start sm:justify-center p-2 sm:p-4 overflow-y-auto overscroll-contain py-4">
+            <div className="relative bg-white rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 max-w-sm sm:max-w-md w-full text-center shadow-2xl border-4 border-amber-400 flex flex-col items-center animate-in zoom-in duration-200 max-h-[92dvh] overflow-y-auto custom-scrollbar my-auto">
+              
+              {/* TOMBOL TUTUP CEPAT */}
+              <button
+                onClick={() => setShowScoreModal(false)}
+                className="absolute top-2.5 right-2.5 sm:top-3.5 sm:right-3.5 z-20 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-100 hover:bg-rose-50 text-slate-500 hover:text-rose-600 font-black text-xs sm:text-sm flex items-center justify-center shadow-sm border border-slate-200 transition-all cursor-pointer active:scale-90"
+                title="Tutup Hasil Skor"
+              >
+                ✕
+              </button>
+
               <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mb-1 text-2xl shadow-inner flex-shrink-0">
                 🕵️‍♀️
               </div>
@@ -606,42 +629,38 @@ export default function Day1LevelD({ onBack, onComplete, misiId = 'misi_h1_d' })
               <div className="w-full flex flex-col gap-1.5 flex-shrink-0">
                 <button
                   onClick={() => {
+                    playAudioFeedback('click')
                     setShowScoreModal(false)
-                    setShowLeaderboard(true)
+                    onComplete && onComplete({ score: earnedScore, missionId: 'misi_h1_d', nextMission: 'e' })
                   }}
                   className="w-full bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:from-amber-400 hover:to-yellow-300 active:scale-95 text-slate-950 font-black py-2.5 px-4 rounded-full shadow-lg text-xs uppercase tracking-wider cursor-pointer transition-all flex items-center justify-center gap-1.5 border border-amber-300"
                 >
-                  <span>Lanjut (Lihat Balapan Skor 🏁)</span>
+                  <span>Lanjut ke Game Misi E</span>
                   <span className="text-sm font-black">➔</span>
                 </button>
 
                 <button
-                  onClick={() => setShowScoreModal(false)}
+                  onClick={() => {
+                    playAudioFeedback('click')
+                    setShowScoreModal(false)
+                    onComplete && onComplete({ score: earnedScore, missionId: 'misi_h1_d' })
+                    onBack && onBack()
+                  }}
                   className="w-full bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-extrabold py-2 px-4 rounded-full border border-slate-300 text-xs uppercase tracking-wider cursor-pointer transition-all flex items-center justify-center gap-1"
                 >
-                  <span>🔍 Review Jawaban Buku</span>
+                  <span>🏠 Kembali ke Menu Misi</span>
+                </button>
+
+                <button
+                  onClick={() => setShowScoreModal(false)}
+                  className="w-full py-1 text-slate-500 hover:text-slate-700 font-bold text-[11px] cursor-pointer"
+                >
+                  🔍 Review Jawaban Buku
                 </button>
               </div>
             </div>
           </div>
         )}
-
-        {/* MODAL BALAPAN SKOR / LEADERBOARD */}
-        <ScoreRaceLeaderboardModal
-          isOpen={showLeaderboard}
-          currentMissionId="misi_h1_d"
-          currentMissionTitle="Misi D: Detektif Gejala"
-          currentScore={earnedScore}
-          nextMissionKey="E"
-          nextMissionTitle="Misi E (Dokter Mandiri)"
-          onNext={() => {
-            onComplete && onComplete({ score: earnedScore, missionId: 'misi_h1_d', nextMission: 'e' })
-          }}
-          onBackToMenu={() => {
-            onComplete && onComplete({ score: earnedScore, missionId: 'misi_h1_d' })
-            onBack && onBack()
-          }}
-        />
 
       </div>
     </div>

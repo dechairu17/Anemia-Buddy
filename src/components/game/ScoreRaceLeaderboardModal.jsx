@@ -145,9 +145,21 @@ export default function ScoreRaceLeaderboardModal({
   const top3 = leaderboardData[2]
 
   return (
-    <div className="fixed inset-0 z-[120] bg-black/80 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 select-none overflow-y-auto">
-      <div className="relative w-full max-w-2xl bg-gradient-to-b from-[#0F172A] via-[#1E293B] to-[#0A0F1D] text-white rounded-3xl border-3 border-amber-400/80 shadow-[0_20px_60px_rgba(0,0,0,0.85)] flex flex-col p-3 sm:p-5 max-h-[95dvh] overflow-hidden my-auto animate-zoomIn">
+    <div className="fixed inset-0 z-[120] bg-black/85 backdrop-blur-md flex flex-col items-center justify-start sm:justify-center p-2 sm:p-4 select-none overflow-y-auto overscroll-contain py-3 sm:py-6">
+      <div className="relative w-full max-w-2xl bg-gradient-to-b from-[#0F172A] via-[#1E293B] to-[#0A0F1D] text-white rounded-3xl border-3 border-amber-400/80 shadow-[0_20px_60px_rgba(0,0,0,0.85)] flex flex-col p-3 sm:p-5 max-h-[92dvh] overflow-y-auto custom-scrollbar my-auto animate-zoomIn">
         
+        {/* TOMBOL TUTUP / KELUAR CEPAT */}
+        <button
+          onClick={() => {
+            playSound('click')
+            onBackToMenu && onBackToMenu()
+          }}
+          className="absolute top-2.5 right-2.5 sm:top-3.5 sm:right-3.5 z-30 w-8 h-8 rounded-full bg-slate-800/90 hover:bg-rose-600 text-slate-300 hover:text-white font-black text-sm flex items-center justify-center shadow-lg transition-all active:scale-90 border border-slate-600 cursor-pointer"
+          title="Tutup Balapan Skor"
+        >
+          ✕
+        </button>
+
         {/* AMBIENT GLOW */}
         <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-80 h-40 bg-amber-500/20 rounded-full blur-3xl pointer-events-none" />
 
@@ -396,7 +408,7 @@ export default function ScoreRaceLeaderboardModal({
         {/* =====================================================================
             FOOTER TOMBOL NAVIGASI: KEMBALI KE MENU / LANJUT KE GAME BERIKUTNYA
            ===================================================================== */}
-        <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-800 flex-shrink-0">
+        <div className="sticky bottom-0 bg-[#0A0F1D]/95 backdrop-blur-md pt-2 pb-1 border-t border-slate-800 z-20 flex-shrink-0 flex items-center justify-between gap-2 mt-auto">
           <button
             onClick={() => {
               playSound('click')
