@@ -409,30 +409,17 @@ export default function Day2LevelC({ misiId = 'misi_h2_c', onBack, onComplete })
   const availableLeftFoods = shuffledLeftFoods.filter((f) => !allUsedFoodIds.includes(f.id))
   const availableRightFoods = shuffledRightFoods.filter((f) => !allUsedFoodIds.includes(f.id))
 
-  // FUNGSI AUTO-REFILL RAK LEMARI DENGAN SISA MAKANAN (CADANGAN)
-  // Agar rak tidak kosong/bolong saat makanan diambil atau berpindah sesi:
-  // - Distribusikan sisa makanan ke 5 rak kayu dari atas ke bawah
-  // - Jika tersisa >= 5 makanan: setiap rak terisi minimal 1 makanan
-  // - 1 makanan per rak -> posisi tengah (justify-center)
-  // - 2 makanan per rak -> posisi kiri dan kanan (justify-between)
+  // FUNGSI PENGISIAN RAK LEMARI (2 MAKANAN PER RAK DARI ATAS KE BAWAH)
+  // Makanan cadangan yang belum terpakai mengisi rak dari atas ke bawah.
+  // Saat makanan habis terpakai, slot makanan langsung hilang dan lemari mengecil secara bertahap.
   const distributeFoodsToShelves = (foodList) => {
     const shelves = [[], [], [], [], []]
     if (!foodList || foodList.length === 0) return shelves
 
-    const n = foodList.length
-    const base = Math.min(2, Math.floor(n / 5))
-    let remainder = n % 5
-    if (base === 2) remainder = 0
-
-    let itemIdx = 0
-    for (let s = 0; s < 5; s++) {
-      let count = base
-      if (remainder > 0 && count < 2) {
-        count++
-        remainder--
-      }
-      for (let c = 0; c < count && itemIdx < n; c++) {
-        shelves[s].push(foodList[itemIdx++])
+    for (let i = 0; i < foodList.length && i < 10; i++) {
+      const shelfIdx = Math.floor(i / 2)
+      if (shelfIdx < 5) {
+        shelves[shelfIdx].push(foodList[i])
       }
     }
     return shelves
@@ -561,8 +548,6 @@ export default function Day2LevelC({ misiId = 'misi_h2_c', onBack, onComplete })
   }
 
   // SELESAIKAN SATU SESI (PAGI -> SIANG -> MALAM)
-  // CATATAN PENELITIAN: Tidak menampilkan peringatan atau koreksi kesalahan di tengah tes
-  // agar hasil penelitian valid dan objektif. Cukup berikan hasil akhir di akhir permainan.
   const handleFinishCurrentSession = () => {
     if (filledCount < 5) {
       playSound('wrong')
@@ -573,15 +558,15 @@ export default function Day2LevelC({ misiId = 'misi_h2_c', onBack, onComplete })
     playSound('celebration')
 
     const currentSession = SESSIONS[sessionIndex]
+    const plate = dailyPlates[currentSession.key]
 
-    // Jika belum sesi terakhir (Pagi atau Siang), langsung simpan dan lanjut ke waktu makan berikutnya
-    if (sessionIndex < SESSIONS.length - 1) {
-      setSessionIndex((prev) => prev + 1)
-      showToast(`✓ Menu ${currentSession.title} tersimpan! Lanjut ke ${SESSIONS[sessionIndex + 1]?.title}.`)
-    } else {
-      // Semua 3 sesi selesai -> Kemenangan Akhir & Tampilkan Hasil
-      handleFinishGame()
-    }
+    // Tampilkan modal popup review jawaban sesi ini (tanpa peringatan / koreksi kesalahan untuk penelitian)
+    setSessionReviewModal({
+      sessionTitle: currentSession.title,
+      sessionIcon: currentSession.icon,
+      plate: plate,
+      isLastSession: sessionIndex === SESSIONS.length - 1
+    })
   }
 
   // LANJUT KE SESI BERIKUTNYA ATAU KE LAYAR VICTORY
@@ -1207,6 +1192,66 @@ export default function Day2LevelC({ misiId = 'misi_h2_c', onBack, onComplete })
       )}
 
 
+
+      {/* =====================================================================
+          MODAL POPUP REVIEW MENU SESI MAKAN (PAGI / SIANG)
+          ===================================================================== */}
+      {sessionReviewModal && (
+        <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm flex flex-col items-center justify-start sm:justify-center p-2 sm:p-4 overflow-y-auto overscroll-contain py-4 animate-fade-in">
+          <div className="relative bg-[#1c0a0e] text-white border-2 border-amber-500/80 rounded-3xl max-w-md w-full p-4 sm:p-5 shadow-2xl flex flex-col items-center text-center max-h-[92dvh] overflow-y-auto custom-scrollbar my-auto">
+            {/* TOMBOL TUTUP / LANJUT */}
+            <button
+              onClick={handleProceedNextSession}
+              className="absolute top-2.5 right-2.5 z-20 w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-slate-300 font-bold text-xs flex items-center justify-center cursor-pointer transition-all active:scale-90"
+              title="Lanjut"
+            >
+              ✕
+            </button>
+
+            <div className="text-3xl mb-1">{sessionReviewModal.sessionIcon}</div>
+            <h3 className="text-amber-400 font-black text-base sm:text-lg mb-1">
+              Menu {sessionReviewModal.sessionTitle} Berhasil Disusun!
+            </h3>
+            <p className="text-slate-300 text-xs mb-3">
+              Menu pilihanmu telah tersimpan rapi untuk {sessionReviewModal.sessionTitle}.
+            </p>
+
+            {/* DAFTAR 5 MAKANAN TERPILIH (BERSIH & OBJEKTIF TANPA PERINGATAN / KOREKSI KELIRU) */}
+            <div className="w-full bg-white/5 border border-white/10 rounded-2xl p-2.5 mb-3 grid grid-cols-5 gap-1.5 text-center">
+              {[
+                { label: 'Karbo', item: sessionReviewModal.plate.karbohidrat },
+                { label: 'Hewani', item: sessionReviewModal.plate.protein_hewani },
+                { label: 'Nabati', item: sessionReviewModal.plate.protein_nabati },
+                { label: 'Sayur', item: sessionReviewModal.plate.sayur },
+                { label: 'Buah', item: sessionReviewModal.plate.buah }
+              ].map(({ label, item }) => (
+                <div key={label} className="relative flex flex-col items-center">
+                  <span className="text-[8px] text-slate-400 uppercase font-bold block mb-1">{label}</span>
+                  <div className="relative">
+                    <img src={item?.img} alt="" className="w-8 h-8 object-contain" />
+                    <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full text-[8px] font-black flex items-center justify-center shadow bg-emerald-500 text-white">
+                      ✓
+                    </span>
+                  </div>
+                  <span
+                    className="text-[9px] font-bold block truncate mt-1 max-w-full text-amber-200"
+                    title={item?.name}
+                  >
+                    {item?.name}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={handleProceedNextSession}
+              className="w-full py-2.5 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-slate-950 font-black text-xs sm:text-sm tracking-wide shadow-lg active:scale-95 transition cursor-pointer"
+            >
+              {sessionReviewModal.isLastSession ? 'Lihat Hasil Akhir Sehari ➔' : `Lanjut ke ${SESSIONS[sessionIndex + 1]?.title} ➔`}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* =====================================================================
           TAHAP 4: LAYAR HASIL AKHIR & KEMENANGAN (VICTORY SEHARI PENUH)
