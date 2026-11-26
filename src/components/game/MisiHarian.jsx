@@ -131,7 +131,7 @@ function MisiHarian({ level = 1, onBack, onSelectMisi, onGoToLevel2, onGoToLevel
       A: { type: 'game', id: 'misi_h2_a', name: 'Misi A (Pemilahan Gejala & Dampak)' },
       B: { type: 'game', id: 'misi_h2_b', name: 'Misi B (Catcher Makanan Anti Anemia)' },
       C: { type: 'game', id: 'misi_h2_c', name: 'Misi C (Isi Piringku Sehari)' },
-      D: { type: 'placeholder', id: 'misi_h2_d', name: 'Misi D (Segera Hadir)', isComingSoon: true },
+      D: { type: 'game', id: 'misi_h2_d', name: 'Misi D (Benteng Pertahanan Anemia)' },
       E: { type: 'placeholder', id: 'misi_h2_e', name: 'Misi E (Segera Hadir)', isComingSoon: true },
     }
   }

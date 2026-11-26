@@ -18,6 +18,7 @@ import Day1LevelE from './components/game/Day1LevelE' // Komponen Game Day 1 Lev
 import Day2LevelA from './components/game/Day2LevelA' // Komponen Game Day 2 Level A
 import Day2LevelB from './components/game/Day2LevelB' // Komponen Game Day 2 Level B
 import Day2LevelC from './components/game/Day2LevelC' // Komponen Game Day 2 Level C
+import Day2LevelD from './components/game/Day2LevelD' // Komponen Game Day 2 Level D
 
 function App() {
   const [currentPage, setCurrentPage] = useState('login')
@@ -272,6 +273,21 @@ function App() {
           onBack={() => setCurrentPage('game_level_2')}
           onComplete={(result) => {
             console.log('Day 2 Level C Selesai:', result)
+            if (result?.nextMission) {
+              setCurrentPage(`day2_level_${result.nextMission.toLowerCase()}`)
+            } else {
+              setCurrentPage('game_level_2')
+            }
+          }}
+        />
+      )}
+
+      {/* MODUL GAMEPLAY DAY 2 LEVEL D */}
+      {currentPage === 'day2_level_d' && (
+        <Day2LevelD 
+          onBack={() => setCurrentPage('game_level_2')}
+          onComplete={(result) => {
+            console.log('Day 2 Level D Selesai:', result)
             if (result?.nextMission) {
               setCurrentPage(`day2_level_${result.nextMission.toLowerCase()}`)
             } else {
