@@ -561,6 +561,8 @@ export default function Day2LevelC({ misiId = 'misi_h2_c', onBack, onComplete })
   }
 
   // SELESAIKAN SATU SESI (PAGI -> SIANG -> MALAM)
+  // CATATAN PENELITIAN: Tidak menampilkan peringatan atau koreksi kesalahan di tengah tes
+  // agar hasil penelitian valid dan objektif. Cukup berikan hasil akhir di akhir permainan.
   const handleFinishCurrentSession = () => {
     if (filledCount < 5) {
       playSound('wrong')
@@ -571,40 +573,15 @@ export default function Day2LevelC({ misiId = 'misi_h2_c', onBack, onComplete })
     playSound('celebration')
 
     const currentSession = SESSIONS[sessionIndex]
-    const plate = dailyPlates[currentSession.key]
 
-    const correctCount = countCorrectInPlate(plate)
-    const wrongItems = Object.values(plate).filter((f) => f && WRONG_FOOD_IDS.includes(f.id))
-    const sessionPts = Math.round(correctCount * (100 / 15) * 10) / 10
-
-    // Evaluasi superfood
-    const superfoods = Object.values(plate).filter((f) => f && f.isSuperfood)
-    const hasAnimalIron = plate.protein_hewani && plate.protein_hewani.isSuperfood
-    const hasVegetableIron = (plate.sayur && plate.sayur.isSuperfood) || (plate.protein_nabati && plate.protein_nabati.isSuperfood)
-    const hasVitC = plate.buah && plate.buah.isSuperfood
-
-    let praise = 'Menu gizi seimbang tersusun rapi!'
-    if (wrongItems.length > 0) {
-      praise = `Terdapat ${wrongItems.length} pilihan kurang tepat (${wrongItems.map((f) => f.name).join(', ')}). Hindari makanan junk/olahan untuk hasil pencegahan anemia yang optimal!`
-    } else if (hasAnimalIron && hasVitC) {
-      praise = '🔥 Luar Biasa! Duet Zat Besi Hewani & Vitamin C membuat penyerapan darah sangat optimal!'
-    } else if (hasVegetableIron && hasVitC) {
-      praise = '🥦 Mantap! Zat Besi Nabati diduetkan dengan Vitamin C sehingga terserap sempurna!'
-    } else if (superfoods.length >= 2) {
-      praise = '✨ Menu kaya zat besi & mikronutrien penting pencegah anemia!'
+    // Jika belum sesi terakhir (Pagi atau Siang), langsung simpan dan lanjut ke waktu makan berikutnya
+    if (sessionIndex < SESSIONS.length - 1) {
+      setSessionIndex((prev) => prev + 1)
+      showToast(`✓ Menu ${currentSession.title} tersimpan! Lanjut ke ${SESSIONS[sessionIndex + 1]?.title}.`)
+    } else {
+      // Semua 3 sesi selesai -> Kemenangan Akhir & Tampilkan Hasil
+      handleFinishGame()
     }
-
-    setSessionReviewModal({
-      sessionTitle: currentSession.title,
-      sessionIcon: currentSession.icon,
-      plate: plate,
-      praise: praise,
-      correctCount: correctCount,
-      wrongItems: wrongItems,
-      sessionPts: sessionPts,
-      superfoodCount: superfoods.length,
-      isLastSession: sessionIndex === SESSIONS.length - 1
-    })
   }
 
   // LANJUT KE SESI BERIKUTNYA ATAU KE LAYAR VICTORY
@@ -1244,78 +1221,7 @@ export default function Day2LevelC({ misiId = 'misi_h2_c', onBack, onComplete })
         </main>
       )}
 
-      {/* =====================================================================
-          MODAL EVALUASI SESI MAKAN (PAGI / SIANG / MALAM)
-          ===================================================================== */}
-      {sessionReviewModal && (
-        <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm flex flex-col items-center justify-start sm:justify-center p-2 sm:p-4 overflow-y-auto overscroll-contain py-4 animate-fade-in">
-          <div className="relative bg-[#1c0a0e] text-white border-2 border-amber-500/80 rounded-3xl max-w-md w-full p-4 sm:p-5 shadow-2xl flex flex-col items-center text-center max-h-[92dvh] overflow-y-auto custom-scrollbar my-auto">
-            {/* TOMBOL TUTUP / LANJUT */}
-            <button
-              onClick={handleProceedNextSession}
-              className="absolute top-2.5 right-2.5 z-20 w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-slate-300 font-bold text-xs flex items-center justify-center cursor-pointer transition-all active:scale-90"
-              title="Lanjut"
-            >
-              ✕
-            </button>
 
-            <div className="text-3xl mb-1">{sessionReviewModal.sessionIcon}</div>
-            <h3 className="text-amber-400 font-black text-base sm:text-lg mb-1">
-              Menu {sessionReviewModal.sessionTitle} Berhasil Disusun!
-            </h3>
-            <p className="text-slate-300 text-xs mb-3">
-              {sessionReviewModal.praise}
-            </p>
-
-            {/* DAFTAR 5 MAKANAN TERPILIH DENGAN INDIKATOR BENAR / SALAH */}
-            <div className="w-full bg-white/5 border border-white/10 rounded-2xl p-2.5 mb-2 grid grid-cols-5 gap-1.5 text-center">
-              {[
-                { label: 'Karbo', item: sessionReviewModal.plate.karbohidrat },
-                { label: 'Hewani', item: sessionReviewModal.plate.protein_hewani },
-                { label: 'Nabati', item: sessionReviewModal.plate.protein_nabati },
-                { label: 'Sayur', item: sessionReviewModal.plate.sayur },
-                { label: 'Buah', item: sessionReviewModal.plate.buah }
-              ].map(({ label, item }) => {
-                const isItemWrong = item && WRONG_FOOD_IDS.includes(item.id)
-                return (
-                  <div key={label} className="relative flex flex-col items-center">
-                    <span className="text-[8px] text-slate-400 uppercase font-bold block mb-1">{label}</span>
-                    <div className="relative">
-                      <img src={item?.img} alt="" className="w-8 h-8 object-contain" />
-                      <span
-                        className={`absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full text-[8px] font-black flex items-center justify-center shadow ${
-                          isItemWrong ? 'bg-rose-500 text-white' : 'bg-emerald-500 text-white'
-                        }`}
-                      >
-                        {isItemWrong ? '✕' : '✓'}
-                      </span>
-                    </div>
-                    <span
-                      className={`text-[9px] font-bold block truncate mt-1 max-w-full ${
-                        isItemWrong ? 'text-rose-300 line-through' : 'text-amber-200'
-                      }`}
-                      title={item?.name}
-                    >
-                      {item?.name}
-                    </span>
-                  </div>
-                )
-              })}
-            </div>
-
-            <div className="text-[11px] font-bold text-amber-300 bg-black/40 px-3 py-1 rounded-full border border-amber-500/30 mb-3">
-              Poin Sesi Ini: +{sessionReviewModal.sessionPts} PTS ({sessionReviewModal.correctCount}/5 Benar)
-            </div>
-
-            <button
-              onClick={handleProceedNextSession}
-              className="w-full py-2.5 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-slate-950 font-black text-xs sm:text-sm tracking-wide shadow-lg active:scale-95 transition cursor-pointer"
-            >
-              {sessionReviewModal.isLastSession ? 'Lihat Hasil Akhir Sehari ➔' : `Lanjut ke ${SESSIONS[sessionIndex + 1]?.title} ➔`}
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* =====================================================================
           TAHAP 4: LAYAR HASIL AKHIR & KEMENANGAN (VICTORY SEHARI PENUH)

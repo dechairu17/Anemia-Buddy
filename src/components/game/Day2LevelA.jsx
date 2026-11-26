@@ -365,7 +365,7 @@ export default function Day2LevelA({ misiId = 'misi_h2_a', onBack, onComplete })
         )
       )
       setSelectedCardId(null)
-      showToast(`✨ Tepat! "${card.text}" adalah ${card.label}!`)
+      showToast(`✨ Pilihan tepat!`)
 
       // Cek apakah semua 13 kartu sudah terpilah
       const remainingCount = cards.filter(c => !c.isSorted && c.id !== cardId).length
@@ -379,7 +379,7 @@ export default function Day2LevelA({ misiId = 'misi_h2_a', onBack, onComplete })
       setErrorCardId(cardId)
       setStreak(0)
       setCurrentScore(prev => Math.max(60, prev - 5))
-      showToast(`❌ Kurang tepat! "${card.text}" masuk keranjang ${card.label}!`)
+      showToast(`❌ Kurang tepat!`)
 
       setTimeout(() => {
         setErrorCardId(null)

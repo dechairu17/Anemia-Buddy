@@ -231,13 +231,15 @@ export default function Day1LevelD({ onBack, onComplete, misiId = 'misi_h1_d' })
     setLevel1Mistakes(prev => prev + 1)
     setEarnedScore(prev => Math.max(50, prev - 5))
 
-    const card = deck[currentCardIndex]
-    setFeedbackModal({
-      isCorrect: false,
-      card,
-      chosenType: 'timeout',
-      explanation: `Waktu habis! Jawaban yang benar adalah ${card.type.toUpperCase()}. ${card.explanation}`
-    })
+    // PENELITIAN: Tidak menampilkan modal peringatan/penjelasan di tengah tes.
+    // Waktu habis langsung melanjutkan ke kartu berikutnya.
+    setTimeLeft(15)
+    if (currentCardIndex + 1 >= deck.length) {
+      playSound('cring')
+      setPhase('level1_complete')
+    } else {
+      setCurrentCardIndex(prev => prev + 1)
+    }
   }
 
   const resetLevel1Deck = () => {
@@ -324,12 +326,29 @@ export default function Day1LevelD({ onBack, onComplete, misiId = 'misi_h1_d' })
       setTimeout(() => setIsShaking(false), 400)
       setLevel1Mistakes(prev => prev + 1)
       setEarnedScore(prev => Math.max(50, prev - 5))
-      setFeedbackModal({
-        isCorrect: false,
-        card,
-        chosenType,
-        explanation: card.explanation
+
+      // PENELITIAN: Tidak menampilkan peringatan atau penjelasan kartu salah di tengah tes.
+      // Langsung melanjutkan ke kartu berikutnya untuk menguji pengetahuan responden secara objektif.
+      setActiveStamp({
+        text: chosenType === 'fakta' ? 'FAKTA' : 'MITOS',
+        type: chosenType
       })
+      playSound('stamp')
+
+      if (chosenType === 'fakta') setFaktaCount(prev => prev + 1)
+      else setMitosCount(prev => prev + 1)
+
+      setTimeLeft(15)
+
+      setTimeout(() => {
+        setActiveStamp(null)
+        if (currentCardIndex + 1 >= deck.length) {
+          playSound('cring')
+          setPhase('level1_complete')
+        } else {
+          setCurrentCardIndex(prev => prev + 1)
+        }
+      }, 450)
     }
   }
 
@@ -1051,30 +1070,7 @@ export default function Day1LevelD({ onBack, onComplete, misiId = 'misi_h1_d' })
           </div>
         )}
 
-        {/* -----------------------------------------------------------------------
-            FEEDBACK MODAL SAAT JAWABAN KELIRU / TIMEOUT
-           ----------------------------------------------------------------------- */}
-        {feedbackModal && (
-          <div className="absolute inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-3">
-            <div className="bg-white rounded-2xl p-4 sm:p-5 max-w-sm w-full shadow-2xl border-4 border-rose-500 text-center animate-scaleUp">
-              <div className="w-12 h-12 rounded-full bg-rose-100 border-2 border-rose-400 flex items-center justify-center text-2xl mx-auto mb-2 text-rose-600 font-bold">
-                ✕
-              </div>
-              <h3 className="text-rose-700 font-black text-sm sm:text-base mb-1">
-                {feedbackModal.chosenType === 'timeout' ? 'Waktu Habis!' : 'Pemilahan Kurang Tepat! (-5 PTS)'}
-              </h3>
-              <p className="text-slate-700 text-xs my-2 leading-relaxed bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-                {feedbackModal.explanation}
-              </p>
-              <button
-                onClick={dismissFeedbackModal}
-                className="w-full py-2.5 bg-[#003049] hover:bg-[#002233] text-white font-black text-xs rounded-xl shadow cursor-pointer active:scale-95 transition-all mt-2"
-              >
-                Saya Mengerti, Lanjutkan!
-              </button>
-            </div>
-          </div>
-        )}
+
 
         {/* -----------------------------------------------------------------------
             TRANSISI LEVEL 1 SELESAI -> KE LEVEL 2 (PUZZLE ALUR ANEMIA)
@@ -1306,7 +1302,7 @@ export default function Day1LevelD({ onBack, onComplete, misiId = 'misi_h1_d' })
                 Alur Belum Tepat! (-10 PTS)
               </h3>
               <p className="text-slate-600 text-xs my-2 leading-relaxed">
-                Ingat alurnya: <b>1. Asupan protein dan zat besi harian kurang</b> ➔ <b>2. Kadar hemoglobin (Hb) dalam darah turun di bawah batas normal</b> ➔ <b>3. Suplai oksigen ke seluruh jaringan tubuh berkurang</b> ➔ <b>4. Muncul keluhan 5L (lemah, lelah, letih, lesu, lunglai) dan konjungtiva mata pucat</b>.
+                Susunan langkah alur patofisiologi anemia belum tepat. Silakan periksa dan atur kembali urutan kepingan langkahmu!
               </p>
               <button
                 onClick={() => setShowLevel2WrongModal(false)}
