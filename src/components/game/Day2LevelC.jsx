@@ -1212,11 +1212,24 @@ export default function Day2LevelC({ misiId = 'misi_h2_c', onBack, onComplete })
             <h3 className="text-amber-400 font-black text-base sm:text-lg mb-1">
               Menu {sessionReviewModal.sessionTitle} Berhasil Disusun!
             </h3>
-            <p className="text-slate-300 text-xs mb-3">
+            <p className="text-slate-300 text-xs mb-2">
               Menu pilihanmu telah tersimpan rapi untuk {sessionReviewModal.sessionTitle}.
             </p>
 
-            {/* DAFTAR 5 MAKANAN TERPILIH (BERSIH & OBJEKTIF TANPA PERINGATAN / KOREKSI KELIRU) */}
+            {/* BADGE SKOR SESI (DENGAN PENILAIAN JELAS: HANYA MAKANAN BERGIZI YANG MENDAPAT POIN) */}
+            {(() => {
+              const sessionCorrect = countCorrectInPlate(sessionReviewModal.plate)
+              const sessionPts = Math.round(sessionCorrect * (100 / 15) * 10) / 10
+              return (
+                <div className="text-[11px] font-bold text-amber-300 bg-black/40 px-3 py-1 rounded-full border border-amber-500/30 mb-3 flex items-center gap-1.5">
+                  <span>Poin Sesi Ini:</span>
+                  <span className="text-amber-400 font-black">+{sessionPts} PTS</span>
+                  <span className="text-slate-400 text-[10px]">({sessionCorrect}/5 Bergizi)</span>
+                </div>
+              )
+            })()}
+
+            {/* DAFTAR 5 MAKANAN TERPILIH (MAKANAN JUNK/TANPA GIZI DITANDAI ✕ MERAH & 0 PTS) */}
             <div className="w-full bg-white/5 border border-white/10 rounded-2xl p-2.5 mb-3 grid grid-cols-5 gap-1.5 text-center">
               {[
                 { label: 'Karbo', item: sessionReviewModal.plate.karbohidrat },
@@ -1224,23 +1237,43 @@ export default function Day2LevelC({ misiId = 'misi_h2_c', onBack, onComplete })
                 { label: 'Nabati', item: sessionReviewModal.plate.protein_nabati },
                 { label: 'Sayur', item: sessionReviewModal.plate.sayur },
                 { label: 'Buah', item: sessionReviewModal.plate.buah }
-              ].map(({ label, item }) => (
-                <div key={label} className="relative flex flex-col items-center">
-                  <span className="text-[8px] text-slate-400 uppercase font-bold block mb-1">{label}</span>
-                  <div className="relative">
-                    <img src={item?.img} alt="" className="w-8 h-8 object-contain" />
-                    <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full text-[8px] font-black flex items-center justify-center shadow bg-emerald-500 text-white">
-                      ✓
+              ].map(({ label, item }) => {
+                const isWrong = item && WRONG_FOOD_IDS.includes(item.id)
+                return (
+                  <div key={label} className="relative flex flex-col items-center">
+                    <span className="text-[8px] text-slate-400 uppercase font-bold block mb-1">{label}</span>
+                    <div className="relative">
+                      <img
+                        src={item?.img}
+                        alt=""
+                        className={`w-8 h-8 object-contain ${isWrong ? 'opacity-70' : ''}`}
+                      />
+                      <span
+                        className={`absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full text-[8px] font-black flex items-center justify-center shadow border border-white/40 ${
+                          isWrong ? 'bg-rose-600 text-white' : 'bg-emerald-500 text-white'
+                        }`}
+                      >
+                        {isWrong ? '✕' : '✓'}
+                      </span>
+                    </div>
+                    <span
+                      className={`text-[9px] font-bold block truncate mt-1 max-w-full ${
+                        isWrong ? 'text-rose-300 line-through' : 'text-amber-200'
+                      }`}
+                      title={item?.name}
+                    >
+                      {item?.name}
+                    </span>
+                    <span
+                      className={`text-[8px] font-bold block mt-0.5 leading-tight ${
+                        isWrong ? 'text-rose-400' : 'text-emerald-400'
+                      }`}
+                    >
+                      {isWrong ? '0 PTS (Tanpa Gizi)' : 'Bergizi ✓'}
                     </span>
                   </div>
-                  <span
-                    className="text-[9px] font-bold block truncate mt-1 max-w-full text-amber-200"
-                    title={item?.name}
-                  >
-                    {item?.name}
-                  </span>
-                </div>
-              ))}
+                )
+              })}
             </div>
 
             <button
@@ -1321,7 +1354,10 @@ export default function Day2LevelC({ misiId = 'misi_h2_c', onBack, onComplete })
                             }`}
                             title={item?.name}
                           >
-                            <span>{icon} {item?.name}</span>
+                            <span className="truncate max-w-full">{icon} {item?.name}</span>
+                            <span className={`text-[7px] font-bold mt-0.5 ${isItemWrong ? 'text-rose-400' : 'text-emerald-400'}`}>
+                              {isItemWrong ? '0 PTS (Tanpa Gizi)' : 'Bergizi ✓'}
+                            </span>
                           </div>
                         )
                       })}
