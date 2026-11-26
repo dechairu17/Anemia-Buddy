@@ -566,26 +566,13 @@ export default function Day2LevelB({ misiId = 'misi_h2_b', onBack, onComplete })
           <div className="flex-1" />
         )}
 
-        {/* PROFIL & SKOR PENGGUNA */}
+        {/* STATUS COUNTER MAKANAN (KANAN) */}
         <div className="flex items-center gap-2">
           {stage === 5 && (
-            <div className="hidden sm:flex px-2.5 py-1 rounded-full bg-cyan-950/60 border border-cyan-400/40 text-cyan-200 text-xs font-bold shadow-sm whitespace-nowrap">
+            <div className="px-2.5 py-1 rounded-full bg-cyan-950/60 border border-cyan-400/40 text-cyan-200 text-xs font-bold shadow-sm whitespace-nowrap">
               🍲 Makanan: {Math.min(spawnedCount, TOTAL_SPAWN_FOODS)}/{TOTAL_SPAWN_FOODS}
             </div>
           )}
-          <div className="px-3 py-1 rounded-full bg-black/30 border border-amber-400/30 text-amber-300 text-xs sm:text-sm font-bold shadow-sm whitespace-nowrap">
-            ⭐ {currentScore} PTS
-          </div>
-          <div className="flex items-center gap-1.5 pl-1.5 pr-2.5 py-0.5 rounded-full bg-white/10 border border-white/20">
-            <img
-              src={currentUser?.gender === 'male' ? bgProfilPria : bgProfilWanita}
-              alt="Avatar"
-              className="w-6 h-6 rounded-full object-cover border border-amber-300"
-            />
-            <span className="text-[11px] font-bold text-white hidden sm:inline uppercase">
-              {currentUser?.username || 'Ais'}
-            </span>
-          </div>
         </div>
       </header>
 

@@ -782,22 +782,7 @@ export default function Day1LevelD({ onBack, onComplete, misiId = 'misi_h1_d' })
           </p>
         </div>
 
-        <div className="relative h-9 sm:h-11 flex items-center">
-          <img
-            src={gender === 'female' ? bgProfilWanita : bgProfilPria}
-            alt="Profile Frame"
-            className="h-full w-auto object-contain pointer-events-none drop-shadow-md"
-          />
-          <div className="absolute left-[28%] right-[4%] inset-y-0 flex items-center justify-center gap-1.5 px-2 pointer-events-none">
-            <span className="text-[#8B0000] font-black text-[11px] sm:text-xs truncate max-w-[80px] sm:max-w-[110px] uppercase">
-              {username}
-            </span>
-            <span className="text-[#003049] font-black text-xs opacity-40">|</span>
-            <span className="text-[#003049] font-extrabold text-[11px] sm:text-xs whitespace-nowrap">
-              {totalScore} PTS
-            </span>
-          </div>
-        </div>
+
       </div>
 
       {/* =========================================================================

@@ -456,25 +456,7 @@ export default function Day1LevelE({ onBack, onComplete, misiId = 'misi_h1_e' })
 
                 </div>
 
-                {/* SKOR DINAMIS & PROFIL SISWA */}
-                <div className="flex items-center gap-2 shrink-0">
-                  <div className="bg-amber-400 text-slate-950 font-black text-[10px] sm:text-xs px-2.5 py-1 rounded-full shadow-md border border-amber-300">
-                    ⭐ {earnedScore} PTS
-                  </div>
 
-                  <div className="relative h-7 sm:h-8 hidden md:flex items-center">
-                    <img
-                      src={gender === 'female' ? bgProfilWanita : bgProfilPria}
-                      alt="Profile"
-                      className="h-full w-auto object-contain pointer-events-none"
-                    />
-                    <div className="absolute left-[28%] right-[4%] inset-y-0 flex items-center justify-center gap-1 px-1 pointer-events-none">
-                      <span className="text-[#8B0000] font-black text-[10px] truncate max-w-[65px] uppercase">
-                        {username}
-                      </span>
-                    </div>
-                  </div>
-                </div>
 
               </div>
             </div>

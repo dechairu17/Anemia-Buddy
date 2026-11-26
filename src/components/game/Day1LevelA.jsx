@@ -391,27 +391,7 @@ function Day1LevelA({ onBack, onComplete }) {
         </div>
       )}
 
-      {/* HEADER PROFILE USER (NAMA | POIN DENGAN FRAME PRIA/WANITA) */}
-      {gameState !== 'intro' && (
-        <div className="absolute top-1 sm:top-2 right-2 sm:right-4 z-40">
-          <div 
-            className="relative w-64 sm:w-72 md:w-80 h-18 sm:h-22 md:h-24 bg-contain bg-no-repeat bg-right flex items-center justify-end pr-2 sm:pr-3.5 pl-8"
-            style={{ backgroundImage: `url("${gender === 'female' ? bgProfilWanita : bgProfilPria}")` }}
-          >
-            <div className="flex items-center gap-1.5 sm:gap-2 pr-0.5 sm:pr-1">
-              <span className="text-[#8B0000] font-black text-xs sm:text-sm md:text-base truncate max-w-[90px] sm:max-w-[120px] md:max-w-[140px] uppercase drop-shadow-sm">
-                {username}
-              </span>
-              <span className="text-[#003049] font-black text-xs sm:text-sm md:text-base opacity-40">
-                |
-              </span>
-              <span className="text-[#003049] font-extrabold text-xs sm:text-sm md:text-base whitespace-nowrap">
-                {totalScore} PTS
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
+
 
       {/* =========================================================================
           FASE 1: TAMPILAN AWAL (CARA BERMAIN)

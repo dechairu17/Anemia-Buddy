@@ -484,7 +484,7 @@ export default function Day2LevelA({ misiId = 'misi_h2_a', onBack, onComplete })
           </div>
         </div>
 
-        {/* PROFIL, SKOR & TOMBOL MATERI */}
+        {/* TOMBOL MATERI */}
         <div className="flex items-center gap-2">
           {phase === 3 && (
             <button
@@ -497,19 +497,6 @@ export default function Day2LevelA({ misiId = 'misi_h2_a', onBack, onComplete })
               📖 Catatan Materi
             </button>
           )}
-
-          <div className="flex items-center gap-1.5 bg-black/40 px-2.5 py-0.5 sm:py-1 rounded-full border border-rose-900/60">
-            <img
-              src={gender === 'female' ? bgProfilWanita : bgProfilPria}
-              alt="Profil"
-              className="w-5 h-5 sm:w-6 sm:h-6 rounded-full object-cover border border-amber-400/50"
-            />
-            <div className="text-right">
-              <span className="text-[10px] sm:text-xs font-black text-amber-400">
-                {currentScore} PTS
-              </span>
-            </div>
-          </div>
         </div>
       </header>
 

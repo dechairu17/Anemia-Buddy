@@ -330,9 +330,7 @@ export default function Day1LevelC({ onBack, onComplete, misiId = 'misi_h1_c' })
             </p>
           </div>
 
-          <div className="bg-amber-400 text-slate-950 font-black text-xs px-3 py-1 rounded-full border border-white shadow">
-            Skor: {totalScore} PTS
-          </div>
+
         </div>
 
         {/* TOAST MESSAGE */}

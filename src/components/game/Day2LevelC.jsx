@@ -713,33 +713,18 @@ export default function Day2LevelC({ misiId = 'misi_h2_c', onBack, onComplete })
           </div>
         )}
 
-        {/* PROFIL & SKOR PENGGUNA */}
+        {/* NAVIGASI KANAN (PANDUAN GIZI) */}
         <div className="flex items-center gap-2">
           <button
             onClick={() => {
               playSound('click')
               setShowMateriModal(true)
             }}
-            className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 text-amber-300 text-xs font-bold transition cursor-pointer"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 text-amber-300 text-xs font-bold transition cursor-pointer"
           >
             <span>📖</span>
             <span>Panduan Gizi</span>
           </button>
-
-          <div className="px-2.5 py-1 rounded-full bg-black/40 border border-amber-400/40 text-amber-300 text-xs font-bold shadow-sm whitespace-nowrap">
-            ⭐ {currentScore} PTS
-          </div>
-
-          <div className="flex items-center gap-1.5 pl-1.5 pr-2.5 py-0.5 rounded-full bg-white/10 border border-white/20">
-            <img
-              src={currentUser?.gender === 'male' ? bgProfilPria : bgProfilWanita}
-              alt="Avatar"
-              className="w-5 h-5 rounded-full object-cover border border-amber-300"
-            />
-            <span className="text-[11px] font-bold text-white hidden sm:inline uppercase">
-              {currentUser?.username || 'Ais'}
-            </span>
-          </div>
         </div>
       </header>
 

@@ -186,23 +186,7 @@ export default function Day1LevelB({ onBack, onComplete, misiId = 'misi_h1_b' })
           </p>
         </div>
 
-        {/* PROFIL SISWA */}
-        <div className="relative h-10 sm:h-12 flex items-center">
-          <img
-            src={gender === 'female' ? bgProfilWanita : bgProfilPria}
-            alt="Profil"
-            className="h-full w-auto object-contain pointer-events-none drop-shadow-sm"
-          />
-          <div className="absolute left-[28%] right-[4%] inset-y-0 flex items-center justify-center gap-1.5 px-2 pointer-events-none">
-            <span className="text-[#8B0000] font-black text-xs sm:text-sm truncate max-w-[80px] sm:max-w-[120px] uppercase">
-              {username}
-            </span>
-            <span className="text-[#003049] font-black text-xs opacity-40">|</span>
-            <span className="text-[#003049] font-extrabold text-xs sm:text-sm whitespace-nowrap">
-              {totalScore} PTS
-            </span>
-          </div>
-        </div>
+
       </div>
 
       {/* =========================================================================
