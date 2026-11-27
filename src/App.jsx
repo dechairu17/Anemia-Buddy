@@ -232,6 +232,10 @@ function App() {
               setCurrentPage('day2_level_b')
             } else if (misiData.misiKey === 'C') {
               setCurrentPage('day2_level_c')
+            } else if (misiData.misiKey === 'D') {
+              setCurrentPage('day2_level_d')
+            } else if (misiData.misiKey === 'E') {
+              setCurrentPage('day2_level_e')
             }
           }}
         />
